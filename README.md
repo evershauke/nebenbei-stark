@@ -1,30 +1,44 @@
 # Nebenbei stark
 
-Strichlisten-Logger fürs Handy: Satz machen, einmal tippen, fertig. Statische PWA ohne Server, ohne Konto, Daten nur lokal im Browser. Details zur Umsetzung stehen in `PLAN.md`.
+Strichlisten-Logger fürs Handy: Satz machen, einmal tippen, fertig. Fünf Klimmzüge zwischen zwei Meetings sind in unter drei Sekunden eingetragen – ohne Workout zu starten, ohne Konto, ohne Server.
+
+**App:** https://evershauke.github.io/nebenbei-stark/
+
+## Installieren (Android)
+Link in Chrome öffnen → Menü „⋮“ → „Zum Startbildschirm hinzufügen“ bzw. „App installieren“. Danach startet sie wie eine normale App, auch offline.
 
 ## Funktionen
-- **Heute**: eine Karte je Übung mit zwei Schnellbuttons (zuletzt genutzte Wiederholungszahlen) und „…“ für freie Eingabe mit optionalem Gewicht. Jeder Eintrag lässt sich 5 s lang rückgängig machen.
+- **Heute**: kompakte Karte je Übung mit zwei Schnellknöpfen (die zwei zuletzt genutzten Wiederholungszahlen, aufsteigend, damit nichts unter dem Daumen springt) und „…“ für freie Eingabe mit optionalem Gewicht. Jeder Eintrag lässt sich 5 s lang rückgängig machen. Die Reihenfolge der Karten richtet sich nach der letzten Nutzung vor heute und bleibt den Tag über fest.
 - **Ideen**: Beim Anlegen einer Übung gibt es Vorschläge nach Gruppe (Ziehen, Drücken, Beine, Hüfte, Rumpf); Halte-Übungen wie Plank zählen Sekunden.
-- **Ziele**: Tages- und Wochenziel je Übung, automatisch Schnitt der letzten Zeit + 5 %, im Dialog „Übung bearbeiten“ überschreibbar.
+- **Ziele**: Tages- und Wochenziel je Übung, automatisch Schnitt der letzten Zeit + 5 %, steigt also langsam mit. Antippen der Zielzeile öffnet „Übung bearbeiten“ zum Überschreiben.
 - **Serie**: 🔥 N = Wochen in Folge mit erreichtem Wochenziel.
 - **Belohnung**: aufsteigende Zahl und kurze Vibration bei jedem Eintrag, Konfetti beim Erreichen eines Ziels (aus bei „Bewegung reduzieren“).
-- **Statistik**: letzte 7 Tage (Tag antippen → Sätze bearbeiten) und Verlauf je Übung über 12 Wochen oder Monate.
-- **Daten**: Export/Import als JSON, Erinnerung nach 14 Tagen ohne Export, Übungen umbenennen und archivieren.
-- **Offline** und als App installierbar; Hinweis, wenn eine neue Version verfügbar ist.
+- **Statistik** (eigener Reiter): letzte 7 Tage (Tag antippen → Sätze bearbeiten) und Verlauf je Übung über 12 Wochen oder Monate, ✓ für erreichte Wochenziele.
+- **Direkt-Link**: `…/?u=klimmzuege&n=5` trägt 5 Wiederholungen ein und legt die Übung bei Bedarf an (als Lesezeichen oder Kurzbefehl). Die Links je Übung stehen im Menü „⋯“.
+- **Daten**: Export/Import als JSON, Erinnerung nach 14 Tagen ohne Export, Übungen umbenennen und archivieren (Sätze bleiben).
+- **Offline** und installierbar; Hinweis „Neue Version verfügbar“ nach einem Update.
 
-## Starten
+## Daten & Datenschutz
+Alles bleibt im Browser des Handys (`localStorage`). Es gibt keinen Server und kein Konto. Wer das Handy wechselt oder die Browserdaten löscht, braucht einen Export – die App erinnert daran.
+
+## Aufbau
+Plain HTML/CSS/JavaScript als ES-Module, kein Build, keine Abhängigkeiten.
+
+| Datei | Inhalt |
+|---|---|
+| `index.html`, `style.css` | Seite, Dialoge, Stil (hell/dunkel über `light-dark()`) |
+| `app.js` | Oberfläche, Speichern, Ereignisse |
+| `logic.js` | Reine Funktionen ohne DOM (Ziele, Serie, Statistik, Import …), getestet |
+| `sw.js`, `manifest.webmanifest` | Offline und Installation |
+| `version.js` | Versionsnummer für Cache und Update-Hinweis |
+| `PLAN.md` | Technischer Plan mit Datenmodell und allen Funktionen |
+
+## Entwickeln
 ```sh
 npx http-server -p 8765 -c-1   # oder ein anderer statischer Server
+npm test                       # Tests für logic.js (node --test)
 ```
 Dann `http://localhost:8765` öffnen. Auf dem Handy braucht der Service Worker HTTPS (z. B. GitHub Pages).
 
-## Direkt-Eintrag (QR/NFC)
-`https://<host>/?u=klimmzuege&n=5` trägt 5 Wiederholungen für „Klimmzüge“ ein und legt die Übung bei Bedarf an. Die fertigen Links je Übung stehen im Menü „⋯“.
-
-## Tests
-```sh
-npm test
-```
-
 ## Neue Version veröffentlichen
-In `version.js` die Zahl hochzählen, committen, pushen. Offene Apps zeigen dann „Neue Version verfügbar“.
+In `version.js` die Zahl hochzählen, committen, pushen. GitHub Pages veröffentlicht automatisch; offene Apps zeigen dann „Neue Version verfügbar“.
