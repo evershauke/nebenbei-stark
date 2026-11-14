@@ -4,6 +4,7 @@ Strichlisten-Logger fürs Handy: Satz machen, einmal tippen, fertig. Statische P
 
 ## Funktionen
 - **Heute**: eine Karte je Übung mit zwei Schnellbuttons (zuletzt genutzte Wiederholungszahlen) und „…“ für freie Eingabe mit optionalem Gewicht. Jeder Eintrag lässt sich 5 s lang rückgängig machen.
+- **Ideen**: Beim Anlegen einer Übung gibt es Vorschläge nach Gruppe (Ziehen, Drücken, Beine, Hüfte, Rumpf); Halte-Übungen wie Plank zählen Sekunden.
 - **Ziele**: Tages- und Wochenziel je Übung, automatisch Schnitt der letzten Zeit + 5 %, im Dialog „Übung bearbeiten“ überschreibbar.
 - **Serie**: 🔥 N = Wochen in Folge mit erreichtem Wochenziel.
 - **Belohnung**: aufsteigende Zahl und kurze Vibration bei jedem Eintrag, Konfetti beim Erreichen eines Ziels (aus bei „Bewegung reduzieren“).

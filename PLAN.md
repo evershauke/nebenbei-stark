@@ -75,7 +75,7 @@ Button „+ Übung“ am Ende der Liste.
 **Dialoge**: natives `<dialog>` + `showModal()`, `closedby="any"` mit Fallback-Script (pointerdown/pointerup außerhalb), `aria-labelledby`, `<form method="dialog">`, `autofocus` auf erstes Feld, `dialog:modal { overscroll-behavior: contain }` und `::backdrop` ebenso. Kein `display` auf `dialog` ohne `[open]`. Im Dialog keine Toasts – Toast erst nach `close`.
 - Freie Eingabe (Wdh. `inputmode=numeric`, `min=1`, `step=1`, required; Gewicht `inputmode=decimal`, `min=0`, `step=0.5`)
 - Satz bearbeiten (+ Löschen)
-- Übung anlegen / bearbeiten (Name, zwei Startwerte nur beim Anlegen, Tages-/Wochenziel nur beim Bearbeiten, leer = automatisch)
+- Übung anlegen / bearbeiten (Name; beim Anlegen Ideen nach Gruppe (Ziehen, Drücken, Beine, Hüfte, Rumpf) als Knöpfe, die Name + Startwerte füllen, ohne schon vorhandene Übungen; zwei Startwerte nur beim Anlegen, Tages-/Wochenziel nur beim Bearbeiten, leer = automatisch)
 - Daten & Übungen: Liste aller Übungen mit Umbenennen / Archivieren / Wiederherstellen; Export; Import (`<input type=file accept=application/json>`); Hinweis wie man den Direkt-Link baut (`?u=klimmzuege&n=5`) inkl. Anzeige der vollen URL je Übung zum Kopieren.
 
 **Direkt-Eintrag**: Beim Laden `?u=&n=` lesen. `n` ganzzahlig ≥ 1, sonst Fehlertoast. Übung via `findOrCreateExercise`, Satz speichern, Toast mit Undo, danach `history.replaceState` auf URL ohne Query (Reload trägt nicht doppelt ein).

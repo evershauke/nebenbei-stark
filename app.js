@@ -88,10 +88,31 @@ function setDialog(title, set, onSave, deletable) {
   });
 }
 
+// Ideen beim Anlegen: Name + zwei Startwerte. Halte-Übungen zählen Sekunden statt Wiederholungen.
+const IDEAS = {
+  Ziehen: [['Klimmzüge', 3, 5], ['Rudern', 8, 12], ['Australian Pull-ups', 8, 12], ['Hängen (Sek.)', 20, 30]],
+  Drücken: [['Liegestütze', 10, 15], ['Dips', 5, 8], ['Pike-Liegestütze', 5, 8], ['Überkopfdrücken', 8, 10]],
+  Beine: [['Kniebeugen', 10, 15], ['Ausfallschritte', 10, 16], ['Bulgarian Split Squats', 8, 10], ['Wadenheben', 15, 20]],
+  Hüfte: [['Kettlebell-Swings', 10, 15], ['Glute Bridge', 10, 15], ['Hip Thrusts', 10, 12]],
+  Rumpf: [['Plank (Sek.)', 30, 60], ['Hollow Hold (Sek.)', 20, 30], ['Beinheben', 8, 10], ['Sit-ups', 10, 15]],
+};
+function renderIdeas(f) {
+  // Schon vorhanden, auch in anderer Form („Klimmzug“ deckt „Klimmzüge“ ab, Umlaute ohne Punkte verglichen).
+  const norm = (n) => n.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, '');
+  const have = state.exercises.map((e) => norm(e.name)), known = (n) => have.some((x) => x.startsWith(norm(n)) || norm(n).startsWith(x));
+  $('exIdeas').replaceChildren(h('p', { className: 'hint' }, 'Ideen – antippen übernimmt Name und Startwerte:'),
+    ...Object.entries(IDEAS).map(([group, list]) => h('div', { role: 'group', ariaLabel: group },
+      h('span', { className: 'hint' }, group),
+      ...list.filter(([name]) => !known(name)).map(([name, a, b]) => h('button', { type: 'button', onclick: () => {
+        f.name.value = name; f.q1.value = a; f.q2.value = b;
+      } }, name)))));
+}
+
 function exDialog(ex) {
   const dlg = $('dlgEx'), f = dlg.querySelector('form');
   $('exTitle').textContent = ex ? 'Übung bearbeiten' : 'Übung anlegen';
-  $('exQuick').hidden = !!ex;
+  $('exQuick').hidden = $('exIdeas').hidden = !!ex;
+  if (!ex) renderIdeas(f);
   $('exGoals').hidden = !ex;
   f.q1.disabled = f.q2.disabled = !!ex;
   f.dayGoal.disabled = f.weekGoal.disabled = !ex;
