@@ -60,7 +60,7 @@ Banner „Neue Version verfügbar“: beim Start und bei `visibilitychange` wird
 Banner (nur wenn `exportNeeded`): „Letzter Export > 14 Tage – jetzt sichern“ mit Button.
 Fehlerbanner (role=alert), wenn Speichern fehlschlägt (try/catch um `localStorage.setItem`).
 
-**Übungskarten** (Reiter Heute, Reihenfolge `sortedExercises`): Name, Zeile „Heute 11/9 ✓“ und „Woche 35/40 · 🔥3“ mit `<progress>` (ohne Ziel nur „Heute 11 Wdh.“; Antippen öffnet „Übung bearbeiten“ mit Tages-/Wochenziel), zwei große Buttons „+5“ „+8“ (aus `quickValues`), Button „…“ → Dialog freie Eingabe (Wiederholungen, Gewicht optional).
+**Übungskarten** (Reiter Heute, Reihenfolge `sortedExercises(state, heute)`: letzte Nutzung vor heute, bleibt also den Tag über fest): kompakt: Name und rechts daneben „Heute 11/9 ✓ · Woche 35/40 🔥3“, darunter zwei dünne `<progress>` (ohne Ziel nur „Heute 11 · Woche 30“; Antippen öffnet „Übung bearbeiten“ mit Tages-/Wochenziel), zwei große Buttons „+5“ „+8“ (aus `quickValues`), Button „…“ → Dialog freie Eingabe (Wiederholungen, Gewicht optional).
 Leerer Zustand: Hinweis + Button „Erste Übung anlegen“.
 Button „+ Übung“ am Ende der Liste.
 

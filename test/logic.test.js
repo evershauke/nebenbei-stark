@@ -57,6 +57,10 @@ test('sortedExercises: letzte Nutzung, ungenutzte danach, ohne archivierte', () 
     sets: [set('1', 'b', '2026-11-14T10:00:00+01:00'), set('2', 'c', '2026-11-14T12:00:00+01:00')],
   };
   assert.deepEqual(L.sortedExercises(s).map((e) => e.id), ['c', 'b', 'a']);
+  // Feste Reihenfolge am Tag: Sätze von heute zählen nicht.
+  const s2 = { ...s, sets: [...s.sets, set('3', 'b', '2026-11-15T09:00:00+01:00')] };
+  assert.deepEqual(L.sortedExercises(s2, '2026-11-15').map((e) => e.id), ['c', 'b', 'a']);
+  assert.deepEqual(L.sortedExercises(s2).map((e) => e.id), ['b', 'c', 'a']);
 });
 
 test('findOrCreateExercise: Slug mit Umlauten, Neuanlage, Reaktivierung', () => {

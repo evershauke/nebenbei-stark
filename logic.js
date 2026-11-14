@@ -51,9 +51,10 @@ export function quickValues(state, exerciseId) {
   return list.sort((a, b) => a - b);
 }
 
-export function sortedExercises(state) {
+// Mit `before` zählen nur Sätze vor diesem Tag: so bleibt die Reihenfolge den Tag über fest und springt nicht beim Tippen.
+export function sortedExercises(state, before = null) {
   const last = new Map();
-  for (const s of state.sets) last.set(s.exerciseId, Math.max(last.get(s.exerciseId) ?? 0, t(s.at)));
+  for (const s of state.sets) if (!before || localDay(s.at) < before) last.set(s.exerciseId, Math.max(last.get(s.exerciseId) ?? 0, t(s.at)));
   return state.exercises.map((e, i) => ({ e, i, u: last.get(e.id) }))
     .filter((x) => !x.e.archived)
     .sort((a, b) => (a.u === undefined) - (b.u === undefined) || (b.u ?? 0) - (a.u ?? 0) || a.i - b.i)

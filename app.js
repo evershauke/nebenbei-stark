@@ -175,17 +175,19 @@ function render() {
   $('date').textContent = new Date().toLocaleDateString('de-DE', { dateStyle: 'full' });
   $('exportBanner').hidden = !exportNeeded(state, Date.now());
   const day = today();
-  const exs = sortedExercises(state);
+  const exs = sortedExercises(state, day);
   const cards = exs.map((ex) => {
     const g = goals(state, ex, day);
     // Ohne Ziel (noch keine Daten) nur die Zahl, sonst „11/9 ✓“ mit Balken.
     const n = streak(state, ex, day);
-    const goal = (label, aria, x, extra = '') => h('span', {},
-      h('span', {}, `${label} ${x.reps}${x.goal ? `/${x.goal}${x.reps >= x.goal ? ' ✓' : ''}` : ' Wdh.'}${extra}`),
-      x.goal ? h('progress', { max: x.goal, value: Math.min(x.reps, x.goal), ariaLabel: `${aria} ${ex.name}` }) : '');
+    const txt = (label, x) => `${label} ${x.reps}${x.goal ? `/${x.goal}${x.reps >= x.goal ? ' ✓' : ''}` : ''}`;
+    const meter = (aria, x) => (x.goal ? h('progress', { max: x.goal, value: Math.min(x.reps, x.goal), ariaLabel: `${aria} ${ex.name}` }) : h('span'));
     return h('div', { className: 'card', 'data-ex': ex.id },
-      h('h3', {}, ex.name),
-      h('button', { type: 'button', className: 'goals', title: 'Ziele ändern', onclick: () => exDialog(ex) }, goal('Heute', 'Tagesziel', g.day), goal('Woche', 'Wochenziel', g.week, n ? ` · 🔥${n}` : '')),
+      h('div', { className: 'top' },
+        h('h3', {}, ex.name),
+        h('button', { type: 'button', className: 'goals', title: 'Ziele ändern', onclick: () => exDialog(ex) },
+          `${txt('Heute', g.day)} · ${txt('Woche', g.week)}${n ? ` 🔥${n}` : ''}`)),
+      g.day.goal || g.week.goal ? h('div', { className: 'meters' }, meter('Tagesziel', g.day), meter('Wochenziel', g.week)) : '',
       h('div', { className: 'quick' },
         ...quickValues(state, ex.id).map((q) => h('button', { type: 'button', onclick: (e) => add(ex.id, q, null, e.currentTarget) }, `+${q}`)),
         h('button', { type: 'button', className: 'more', 'aria-label': `Freie Eingabe für ${ex.name}`, onclick: () => setDialog(ex.name, {}, (r) => r && add(ex.id, r.reps, r.weightKg)) }, '…')));

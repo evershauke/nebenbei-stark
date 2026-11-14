@@ -28,8 +28,11 @@ button, .btn {
 }
 button.primary, .quick button, .banner button, dialog button[value=ok] { background: var(--accent); color: var(--on-accent); border-color: transparent; font-weight: 600; }
 .danger { color: var(--danger); }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 1rem; padding: .75rem 1rem 1rem; margin: .75rem 0; }
-.card h3 { margin: 0; font-size: 1.1rem; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 1rem; padding: .25rem .75rem .75rem; margin: .5rem 0; }
+.card .top { display: flex; align-items: center; gap: .5rem; }
+.card h3 { flex: 1; min-width: 0; margin: 0; font-size: 1.05rem; overflow-wrap: anywhere; }
+.meters { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: .5rem; }
+.meters progress { width: 100%; height: 6px; }
 .quick { display: flex; gap: .5rem; }
 .quick button { flex: 1; font-size: 1.4rem; min-height: 56px; }
 .quick button.more { flex: 0 0 56px; background: var(--card); color: var(--fg); border-color: var(--line); }
@@ -53,9 +56,7 @@ button.primary, .quick button, .banner button, dialog button[value=ok] { backgro
 .row { display: flex; gap: .5rem; margin-bottom: .5rem; }
 .row select { flex: 1; min-height: 48px; padding: 0 .75rem; font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: .75rem; }
 .row select:last-child { flex: 0 0 8rem; }
-button.goals { width: 100%; min-height: 0; padding: .25rem 0 .5rem; margin: .25rem 0 .25rem; border: 0; background: none; display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; text-align: left; font-size: .85rem; color: var(--muted); }
-button.goals > span { display: grid; gap: .2rem; }
-button.goals progress { width: 100%; }
+button.goals { min-height: 44px; padding: 0; border: 0; background: none; font-size: .85rem; color: var(--muted); text-align: right; justify-content: flex-end; }
 .banner, #error, #dataError { padding: .75rem 1rem; border-radius: .75rem; margin: .75rem 0; }
 .banner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid var(--accent); }
 #error, #dataError { border: 1px solid var(--danger); color: var(--danger); }
