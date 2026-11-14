@@ -9,9 +9,12 @@ export function isoLocal(date) {
     `${off < 0 ? '-' : '+'}${pad(Math.floor(a / 60))}:${pad(a % 60)}`;
 }
 
+// shortcut: gemerkt je Zeitstempel (Statistik fragt jeden Satz oft ab); wechselt die Zeitzone bei offener App, gilt die alte bis zum Neuladen.
+const days = new Map();
 export function localDay(iso) {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  let day = days.get(iso);
+  if (!day) { const d = new Date(iso); day = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; days.set(iso, day); }
+  return day;
 }
 
 export function validateSet({ reps, weightKg }) {
@@ -39,7 +42,7 @@ const t = (iso) => Date.parse(iso);
 export function quickValues(state, exerciseId) {
   const ex = state.exercises.find((e) => e.id === exerciseId);
   const recent = state.sets.filter((s) => s.exerciseId === exerciseId)
-    .sort((a, b) => t(b.at) - t(a.at)).map((s) => s.reps);
+    .map((s) => [t(s.at), s.reps]).sort((a, b) => b[0] - a[0]).map((x) => x[1]);
   const list = [...new Set(recent)].slice(0, 2);
   const start = ex?.startQuick ?? [5, 8];
   for (const v of start) if (list.length < 2 && !list.includes(v)) list.push(v);
@@ -105,7 +108,7 @@ export function parseImport(json) {
     if (!e || typeof e.id !== 'string' || typeof e.name !== 'string' || !e.name.trim()) bad('Übung ohne Id oder Namen.');
     if (typeof e.archived !== 'boolean') bad(`Übung „${e.name}“: archived fehlt.`);
     if (!Array.isArray(e.startQuick) || e.startQuick.length !== 2 || !e.startQuick.every((v) => Number.isInteger(v) && v >= 1)) bad(`Übung „${e.name}“: startQuick ungültig.`);
-    for (const k of ["dayGoal", "weekGoal"]) if (e[k] != null && !(Number.isInteger(e[k]) && e[k] >= 1)) bad(`Übung „${e.name}“: ${k} ungültig.`);
+    for (const k of ['dayGoal', 'weekGoal']) if (e[k] != null && !(Number.isInteger(e[k]) && e[k] >= 1)) bad(`Übung „${e.name}“: ${k} ungültig.`);
     ids.add(e.id);
   }
   for (const s of d.sets) {
@@ -138,7 +141,7 @@ export function exportNeeded(state, now) {
 }
 
 // Tage als "YYYY-MM-DD" (lokal); Rechnen über Date(y, m, d + n) ist sommerzeitfest.
-const ymd = (day) => day.split("-").map(Number);
+const ymd = (day) => day.split('-').map(Number);
 const dayOf = (date) => localDay(isoLocal(date));
 export const addDays = (day, n) => { const [y, m, d] = ymd(day); return dayOf(new Date(y, m - 1, d + n)); };
 export const weekStart = (day) => { const [y, m, d] = ymd(day); return addDays(day, -((new Date(y, m - 1, d).getDay() + 6) % 7)); };
@@ -165,8 +168,8 @@ export function periodTotals(state, exerciseId, unit, today, n = 12) {
   const byDay = repsByDay(state, exerciseId);
   const [y, m] = ymd(today);
   return Array.from({ length: n }, (_, i) => {
-    const from = unit === "month" ? dayOf(new Date(y, m - 1 - i, 1)) : addDays(weekStart(today), -7 * i);
-    const to = unit === "month" ? dayOf(new Date(y, m - i, 0)) : addDays(from, 6);
+    const from = unit === 'month' ? dayOf(new Date(y, m - 1 - i, 1)) : addDays(weekStart(today), -7 * i);
+    const to = unit === 'month' ? dayOf(new Date(y, m - i, 0)) : addDays(from, 6);
     return { from, to, reps: sumRange(byDay, from, to) };
   });
 }
@@ -174,36 +177,41 @@ export function periodTotals(state, exerciseId, unit, today, n = 12) {
 // Automatische Ziele: Schnitt der letzten Zeit + 5 % (aufgerundet, also mind. +1) – steigt langsam mit,
 // wenn man die Ziele erreicht. Tag: Trainingstage der letzten 14 Tage vor heute.
 // Woche: Wochen mit Training unter den 4 Wochen vor dieser. Ohne Daten kein Ziel (null).
-export function autoGoals(state, exerciseId, today) {
-  const byDay = repsByDay(state, exerciseId);
+function autoFrom(byDay, today) {
   const goal = (xs) => (xs.length ? Math.ceil((xs.reduce((a, b) => a + b, 0) / xs.length) * 1.05) : null);
   const days = Array.from({ length: 14 }, (_, i) => byDay.get(addDays(today, -1 - i)) ?? 0).filter((r) => r > 0);
   const ws = weekStart(today);
   const weeks = Array.from({ length: 4 }, (_, i) => { const f = addDays(ws, -7 * (i + 1)); return sumRange(byDay, f, addDays(f, 6)); }).filter((r) => r > 0);
   return { day: goal(days), week: goal(weeks) };
 }
+export const autoGoals = (state, exerciseId, today) => autoFrom(repsByDay(state, exerciseId), today);
 
 // Manuell gesetzte Ziele (dayGoal/weekGoal an der Übung) überschreiben die automatischen.
 export function goals(state, ex, today) {
-  const a = autoGoals(state, ex.id, today);
-  const byDay = repsByDay(state, ex.id);
+  const byDay = repsByDay(state, ex.id), a = autoFrom(byDay, today);
   return {
     day: { goal: ex.dayGoal ?? a.day, auto: a.day, reps: byDay.get(today) ?? 0 },
     week: { goal: ex.weekGoal ?? a.week, auto: a.week, reps: sumRange(byDay, weekStart(today), today) },
   };
 }
 
-// Wochen (neueste zuerst) mit dem Ziel, das in der jeweiligen Woche galt, und ob es erreicht wurde.
+// Das in der Woche ab `from` gültige Wochenziel und ob es erreicht wurde.
+function weekResult(byDay, ex, from) {
+  const goal = ex.weekGoal ?? autoFrom(byDay, from).week;
+  return { goal, hit: goal != null && sumRange(byDay, from, addDays(from, 6)) >= goal };
+}
+
+// Wochen wie periodTotals (neueste zuerst), plus Ziel und ob es erreicht wurde.
 export function weekGoalHits(state, ex, today, n = 12) {
-  return periodTotals(state, ex.id, "week", today, n).map((p) => {
-    const goal = ex.weekGoal ?? autoGoals(state, ex.id, p.from).week;
-    return { ...p, goal, hit: goal != null && p.reps >= goal };
-  });
+  const byDay = repsByDay(state, ex.id);
+  return periodTotals(state, ex.id, 'week', today, n).map((p) => ({ ...p, ...weekResult(byDay, ex, p.from) }));
 }
 
 // Wochen in Folge mit erreichtem Wochenziel; die laufende Woche zählt erst, wenn sie geschafft ist, bricht die Serie aber nicht.
+// Endet sicher: ohne Wiederholungen gibt es kein Ziel bzw. es wird nicht erreicht.
 export function streak(state, ex, today) {
-  const [cur, ...past] = weekGoalHits(state, ex, today, 53);
-  const n = past.findIndex((w) => !w.hit);
-  return (cur.hit ? 1 : 0) + (n === -1 ? past.length : n);
+  const byDay = repsByDay(state, ex.id);
+  let from = weekStart(today), n = weekResult(byDay, ex, from).hit ? 1 : 0;
+  while (weekResult(byDay, ex, (from = addDays(from, -7))).hit) n++;
+  return n;
 }

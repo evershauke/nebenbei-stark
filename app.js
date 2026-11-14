@@ -188,7 +188,7 @@ function render() {
       h('button', { type: 'button', className: 'goals', title: 'Ziele ändern', onclick: () => exDialog(ex) }, goal('Heute', 'Tagesziel', g.day), goal('Woche', 'Wochenziel', g.week, n ? ` · 🔥${n}` : '')),
       h('div', { className: 'quick' },
         ...quickValues(state, ex.id).map((q) => h('button', { type: 'button', onclick: (e) => add(ex.id, q, null, e.currentTarget) }, `+${q}`)),
-        h('button', { type: 'button', className: 'more', "aria-label": `Freie Eingabe für ${ex.name}`, onclick: () => setDialog(ex.name, {}, (r) => r && add(ex.id, r.reps, r.weightKg)) }, '…')));
+        h('button', { type: 'button', className: 'more', 'aria-label': `Freie Eingabe für ${ex.name}`, onclick: () => setDialog(ex.name, {}, (r) => r && add(ex.id, r.reps, r.weightKg)) }, '…')));
   });
   cards.push(exs.length
     ? h('button', { type: 'button', className: 'primary', onclick: () => exDialog() }, '+ Übung')
@@ -235,7 +235,7 @@ function renderData() {
     const url = `${location.origin}${location.pathname}?u=${encodeURIComponent(ex.name)}&n=${ex.startQuick[0]}`;
     return h('li', {},
       h('strong', {}, ex.name + (ex.archived ? ' (archiviert)' : '')),
-      h('input', { readOnly: true, value: url, "aria-label": `Direkt-Link ${ex.name}`, onfocus: (e) => e.target.select() }),
+      h('input', { readOnly: true, value: url, 'aria-label': `Direkt-Link ${ex.name}`, onfocus: (e) => e.target.select() }),
       h('button', { type: 'button', onclick: () => { $('dlgData').close(); exDialog(ex); } }, 'Bearbeiten'),
       h('button', { type: 'button', onclick: () => { commit({ ...state, exercises: state.exercises.map((e) => (e.id === ex.id ? { ...e, archived: !e.archived } : e)) }); renderData(); } }, ex.archived ? 'Wiederherstellen' : 'Archivieren'));
   }));
@@ -309,7 +309,8 @@ async function checkUpdate() {
     $('updateBanner').hidden = !(v > loaded);
   } catch {} // offline: kein Hinweis
 }
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(); });
+// Beim Zurückkehren neu zeichnen (die App bleibt im Hintergrund offen, über Mitternacht sonst „gestern“) und nach Updates sehen.
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { render(); checkUpdate(); } });
 $('reload').onclick = () => location.reload();
 
 render();
