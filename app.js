@@ -130,7 +130,7 @@ function render() {
     const s = sums.get(ex.id) ?? { sets: 0, reps: 0 };
     return h('div', { className: 'card' },
       h('h3', {}, ex.name),
-      h('p', {}, `${s.sets} Sätze · ${s.reps} Wdh.`),
+      h('p', {}, `${s.sets} ${s.sets === 1 ? 'Satz' : 'Sätze'} · ${s.reps} Wdh.`),
       h('div', { className: 'quick' },
         ...quickValues(state, ex.id).map((q) => h('button', { type: 'button', onclick: () => add(ex.id, q) }, `+${q}`)),
         h('button', { type: 'button', className: 'more', "aria-label": `Freie Eingabe für ${ex.name}`, onclick: () => setDialog(ex.name, {}, (r) => r && add(ex.id, r.reps, r.weightKg)) }, '…')));
