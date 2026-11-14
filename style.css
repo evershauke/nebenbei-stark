@@ -37,6 +37,11 @@ button.primary, .quick button, .banner button, dialog button[value=ok] { backgro
 #cards > .primary { width: 100%; }
 #today { list-style: none; margin: 0; padding: 0; }
 #today button { width: 100%; justify-content: flex-start; text-align: left; margin-bottom: .35rem; }
+#week { list-style: none; margin: 0; padding: 0; }
+#week li { display: grid; grid-template-columns: 5.5rem 1fr 4.5rem; align-items: center; gap: .25rem .75rem; padding: .4rem 0; border-bottom: 1px solid var(--line); }
+#week .bar { height: 12px; width: var(--w); border-radius: 0 4px 4px 0; background: var(--accent); }
+#week .num { text-align: right; font-variant-numeric: tabular-nums; }
+#week .split { grid-column: 2 / -1; color: var(--muted); font-size: .8rem; }
 .banner, #error, #dataError { padding: .75rem 1rem; border-radius: .75rem; margin: .75rem 0; }
 .banner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid var(--accent); }
 #error, #dataError { border: 1px solid var(--danger); color: var(--danger); }

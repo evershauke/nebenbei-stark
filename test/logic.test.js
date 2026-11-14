@@ -111,3 +111,23 @@ test('exportNeeded', () => {
   assert.equal(L.exportNeeded({ ...withSet, lastExportAt: '2026-11-10T12:00:00Z' }, now), false);
   assert.equal(L.exportNeeded({ ...withSet, lastExportAt: '2026-10-20T12:00:00Z' }, now), true);
 });
+
+test('lastDays: 7 Tage rückwärts, Monatswechsel, leere Tage', async () => {
+  const { lastDays } = await import('../logic.js');
+  const st = {
+    exercises: [{ id: 'a', name: 'Klimmzug' }, { id: 'b', name: 'Liegestütz' }],
+    sets: [
+      { id: '1', exerciseId: 'a', at: '2026-11-02T10:00:00+01:00', reps: 5 },
+      { id: '2', exerciseId: 'b', at: '2026-11-02T11:00:00+01:00', reps: 10 },
+      { id: '3', exerciseId: 'a', at: '2026-10-28T09:00:00+01:00', reps: 3 },
+      { id: '4', exerciseId: 'a', at: '2026-10-26T09:00:00+01:00', reps: 99 },
+    ],
+  };
+  const r = lastDays(st, '2026-11-02');
+  assert.equal(r.length, 7);
+  assert.deepEqual(r.map((x) => x.day), ['2026-11-02', '2026-11-01', '2026-10-31', '2026-10-30', '2026-10-29', '2026-10-28', '2026-10-27']);
+  assert.equal(r[0].reps, 15);
+  assert.equal(r[0].items.length, 2);
+  assert.equal(r[1].reps, 0);
+  assert.equal(r[5].reps, 3);
+});

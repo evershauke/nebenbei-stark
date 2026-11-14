@@ -133,3 +133,13 @@ export function exportNeeded(state, now) {
   const since = state.lastExportAt ? Date.parse(state.lastExportAt) : Math.min(...state.sets.map((x) => t(x.at)));
   return now - since > 14 * 864e5;
 }
+
+// Letzte n Tage bis einschließlich `day` (neueste zuerst), je Tag Summe + Aufteilung nach Übung.
+export function lastDays(state, day, n = 7) {
+  const [y, m, d] = day.split('-').map(Number);
+  return Array.from({ length: n }, (_, i) => {
+    const key = localDay(isoLocal(new Date(y, m - 1, d - i)));
+    const items = daySummary(state, key);
+    return { day: key, reps: items.reduce((a, s) => a + s.reps, 0), items };
+  });
+}

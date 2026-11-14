@@ -1,6 +1,6 @@
 import {
   isoLocal, localDay, validateSet, upsertSet, removeSet, quickValues, sortedExercises,
-  daySummary, setsOfDay, slug, findOrCreateExercise, parseImport, mergeImport, exportNeeded,
+  daySummary, setsOfDay, slug, findOrCreateExercise, parseImport, mergeImport, exportNeeded, lastDays,
 } from './logic.js';
 
 const KEY = 'nebenbei-stark/v1';
@@ -143,6 +143,13 @@ function render() {
   $('today').replaceChildren(...setsOfDay(state, day).map((s) => h('li', {},
     h('button', { type: 'button', onclick: () => editSet(s) },
       `${new Date(s.at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} · ${nameOf(s.exerciseId)} · ${s.reps} Wdh.${kg(s.weightKg)}`))));
+  const week = lastDays(state, day);
+  const max = Math.max(1, ...week.map((d) => d.reps));
+  $('week').replaceChildren(...week.map((d) => h('li', {},
+    h('span', { className: 'day' }, d.day === day ? 'Heute' : new Date(`${d.day}T12:00`).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'numeric' })),
+    h('span', { className: 'bar', style: `--w:${(d.reps / max) * 100}%`, ariaHidden: 'true' }),
+    h('span', { className: 'num' }, d.reps ? `${d.reps} Wdh.` : '–'),
+    d.items.length ? h('span', { className: 'split' }, d.items.map((s) => `${s.name} ${s.reps}`).join(' · ')) : '')));
 }
 
 // ---- Daten & Übungen ----
