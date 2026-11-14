@@ -1,5 +1,6 @@
-const CACHE = 'ns-v3';
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'logic.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
+importScripts('version.js');
+const CACHE = `ns-v${self.APP_VERSION}`;
+const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'logic.js', 'version.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -14,8 +15,8 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
   const nav = e.request.mode === 'navigate';
-  // Netz zuerst (Updates kommen an, Cache wird aufgefrischt), offline aus dem Cache.
-  e.respondWith(fetch(e.request).then((r) => {
+  // Netz zuerst (no-cache: am HTTP-Cache vorbei nachfragen, damit Updates sofort ankommen), offline aus dem Cache.
+  e.respondWith(fetch(e.request, { cache: 'no-cache' }).then((r) => {
     if (r.ok && new URL(e.request.url).origin === location.origin) {
       const copy = r.clone();
       caches.open(CACHE).then((c) => c.put(nav ? 'index.html' : e.request, copy));

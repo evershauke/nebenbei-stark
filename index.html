@@ -18,6 +18,10 @@
     <button type="button" id="menu" aria-label="Daten &amp; Übungen">⋯</button>
   </header>
   <div id="error" role="alert" hidden></div>
+  <div id="updateBanner" class="banner" hidden>
+    <span>Neue Version verfügbar</span>
+    <button type="button" id="reload">Neu laden</button>
+  </div>
   <div id="exportBanner" class="banner" hidden>
     <span>Letzter Export &gt; 14 Tage – jetzt sichern</span>
     <button type="button" id="exportNow">Sichern</button>
@@ -29,7 +33,18 @@
   </section>
   <section aria-labelledby="weekH">
     <h2 id="weekH">Letzte 7 Tage</h2>
-    <ul id="week"></ul>
+    <ul id="week" class="bars"></ul>
+  </section>
+  <section aria-labelledby="histH">
+    <h2 id="histH">Verlauf</h2>
+    <div class="row">
+      <select id="histEx" aria-label="Übung"></select>
+      <select id="histUnit" aria-label="Zeitraum">
+        <option value="week">Wochen</option>
+        <option value="month">Monate</option>
+      </select>
+    </div>
+    <ul id="hist" class="bars"></ul>
   </section>
 </main>
 
@@ -71,6 +86,15 @@
       <label>Startwert 2
         <input name="q2" type="number" inputmode="numeric" min="1" step="1" value="8" required>
       </label>
+    </div>
+    <div id="exGoals">
+      <label>Tagesziel (Wdh.)
+        <input name="dayGoal" type="number" inputmode="numeric" min="1" step="1">
+      </label>
+      <label>Wochenziel (Wdh.)
+        <input name="weekGoal" type="number" inputmode="numeric" min="1" step="1">
+      </label>
+      <p class="hint">Leer lassen = automatisch: Schnitt der letzten Zeit + 5 %, steigt also langsam mit.</p>
     </div>
     <div class="actions">
       <button value="cancel" formnovalidate>Abbrechen</button>

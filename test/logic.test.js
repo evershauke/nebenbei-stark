@@ -131,3 +131,37 @@ test('lastDays: 7 Tage rückwärts, Monatswechsel, leere Tage', async () => {
   assert.equal(r[1].reps, 0);
   assert.equal(r[5].reps, 3);
 });
+
+test('weekStart/addDays: Montag, Monats- und Sommerzeitwechsel', () => {
+  assert.equal(L.weekStart('2026-11-14'), '2026-11-09'); // Samstag
+  assert.equal(L.weekStart('2026-11-09'), '2026-11-09'); // Montag
+  assert.equal(L.weekStart('2026-11-15'), '2026-11-09'); // Sonntag
+  assert.equal(L.addDays('2026-03-28', 2), '2026-03-30');
+  assert.equal(L.addDays('2026-03-01', -1), '2026-02-28');
+});
+
+const at = (day, reps, ex = 'a') => ({ id: `${day}-${reps}-${ex}`, exerciseId: ex, at: `${day}T10:00:00+01:00`, reps });
+
+test('history: Wochen und Monate, neueste zuerst', () => {
+  const st = { exercises: [{ id: 'a' }], sets: [at('2026-11-14', 5), at('2026-11-09', 3), at('2026-11-08', 7), at('2026-10-31', 2), at('2026-11-14', 9, 'b')] };
+  const w = L.history(st, 'a', 'week', '2026-11-14', 3);
+  assert.deepEqual(w, [
+    { from: '2026-11-09', to: '2026-11-15', reps: 8 },
+    { from: '2026-11-02', to: '2026-11-08', reps: 7 },
+    { from: '2026-10-26', to: '2026-11-01', reps: 2 },
+  ]);
+  const m = L.history(st, 'a', 'month', '2026-11-14', 2);
+  assert.deepEqual(m, [{ from: '2026-11-01', to: '2026-11-30', reps: 15 }, { from: '2026-10-01', to: '2026-10-31', reps: 2 }]);
+});
+
+test('goals: automatisch +5 % aufgerundet, manuell überschreibt, ohne Daten null', () => {
+  // Trainingstage der 14 Tage vor heute: 10, 20, 30 (Schnitt 20 -> 21); Wochen davor: 30 (Schnitt 30 -> 32)
+  const st = { exercises: [{ id: 'a' }], sets: [at('2026-11-13', 10), at('2026-11-12', 20), at('2026-11-05', 30), at('2026-11-14', 4)] };
+  const g = L.goals(st, { id: 'a' }, '2026-11-14');
+  assert.deepEqual(g.day, { goal: 21, auto: 21, reps: 4 });
+  assert.deepEqual(g.week, { goal: 32, auto: 32, reps: 34 });
+  const o = L.goals(st, { id: 'a', dayGoal: 50, weekGoal: null }, '2026-11-14');
+  assert.equal(o.day.goal, 50);
+  assert.equal(o.week.goal, 32);
+  assert.deepEqual(L.autoGoals({ exercises: [], sets: [] }, 'a', '2026-11-14'), { day: null, week: null });
+});

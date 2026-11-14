@@ -103,6 +103,7 @@ export function parseImport(json) {
     if (!e || typeof e.id !== 'string' || typeof e.name !== 'string' || !e.name.trim()) bad('Übung ohne Id oder Namen.');
     if (typeof e.archived !== 'boolean') bad(`Übung „${e.name}“: archived fehlt.`);
     if (!Array.isArray(e.startQuick) || e.startQuick.length !== 2 || !e.startQuick.every((v) => Number.isInteger(v) && v >= 1)) bad(`Übung „${e.name}“: startQuick ungültig.`);
+    for (const k of ["dayGoal", "weekGoal"]) if (e[k] != null && !(Number.isInteger(e[k]) && e[k] >= 1)) bad(`Übung „${e.name}“: ${k} ungültig.`);
     ids.add(e.id);
   }
   for (const s of d.sets) {
@@ -134,12 +135,58 @@ export function exportNeeded(state, now) {
   return now - since > 14 * 864e5;
 }
 
+// Tage als "YYYY-MM-DD" (lokal); Rechnen über Date(y, m, d + n) ist sommerzeitfest.
+const ymd = (day) => day.split("-").map(Number);
+const dayOf = (date) => localDay(isoLocal(date));
+export const addDays = (day, n) => { const [y, m, d] = ymd(day); return dayOf(new Date(y, m - 1, d + n)); };
+export const weekStart = (day) => { const [y, m, d] = ymd(day); return addDays(day, -((new Date(y, m - 1, d).getDay() + 6) % 7)); };
+
 // Letzte n Tage bis einschließlich `day` (neueste zuerst), je Tag Summe + Aufteilung nach Übung.
 export function lastDays(state, day, n = 7) {
-  const [y, m, d] = day.split('-').map(Number);
   return Array.from({ length: n }, (_, i) => {
-    const key = localDay(isoLocal(new Date(y, m - 1, d - i)));
+    const key = addDays(day, -i);
     const items = daySummary(state, key);
     return { day: key, reps: items.reduce((a, s) => a + s.reps, 0), items };
   });
+}
+
+// Wiederholungen einer Übung je Tag (Map day -> reps).
+function repsByDay(state, exerciseId) {
+  const m = new Map();
+  for (const s of state.sets) if (s.exerciseId === exerciseId) { const d = localDay(s.at); m.set(d, (m.get(d) ?? 0) + s.reps); }
+  return m;
+}
+const sumRange = (byDay, from, to) => { let n = 0; for (const [d, r] of byDay) if (d >= from && d <= to) n += r; return n; };
+
+// Verlauf je Übung: n Wochen (ab Montag) oder Monate bis einschließlich `today`, neueste zuerst.
+export function history(state, exerciseId, unit, today, n = 12) {
+  const byDay = repsByDay(state, exerciseId);
+  const [y, m] = ymd(today);
+  return Array.from({ length: n }, (_, i) => {
+    const from = unit === "month" ? dayOf(new Date(y, m - 1 - i, 1)) : addDays(weekStart(today), -7 * i);
+    const to = unit === "month" ? dayOf(new Date(y, m - i, 0)) : addDays(from, 6);
+    return { from, to, reps: sumRange(byDay, from, to) };
+  });
+}
+
+// Automatische Ziele: Schnitt der letzten Zeit + 5 % (aufgerundet, also mind. +1) – steigt langsam mit,
+// wenn man die Ziele erreicht. Tag: Trainingstage der letzten 14 Tage vor heute.
+// Woche: Wochen mit Training unter den 4 Wochen vor dieser. Ohne Daten kein Ziel (null).
+export function autoGoals(state, exerciseId, today) {
+  const byDay = repsByDay(state, exerciseId);
+  const goal = (xs) => (xs.length ? Math.ceil((xs.reduce((a, b) => a + b, 0) / xs.length) * 1.05) : null);
+  const days = Array.from({ length: 14 }, (_, i) => byDay.get(addDays(today, -1 - i)) ?? 0).filter((r) => r > 0);
+  const ws = weekStart(today);
+  const weeks = Array.from({ length: 4 }, (_, i) => { const f = addDays(ws, -7 * (i + 1)); return sumRange(byDay, f, addDays(f, 6)); }).filter((r) => r > 0);
+  return { day: goal(days), week: goal(weeks) };
+}
+
+// Manuell gesetzte Ziele (dayGoal/weekGoal an der Übung) überschreiben die automatischen.
+export function goals(state, ex, today) {
+  const a = autoGoals(state, ex.id, today);
+  const byDay = repsByDay(state, ex.id);
+  return {
+    day: { goal: ex.dayGoal ?? a.day, auto: a.day, reps: byDay.get(today) ?? 0 },
+    week: { goal: ex.weekGoal ?? a.week, auto: a.week, reps: sumRange(byDay, weekStart(today), today) },
+  };
 }

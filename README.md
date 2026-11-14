@@ -15,3 +15,6 @@ Dann `http://localhost:8765` öffnen. Auf dem Handy braucht der Service Worker H
 ```sh
 npm test
 ```
+
+## Neue Version veröffentlichen
+In `version.js` die Zahl hochzählen, committen, pushen. Offene Apps zeigen dann „Neue Version verfügbar“.

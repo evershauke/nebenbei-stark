@@ -1,6 +1,7 @@
+import './version.js';
 import {
   isoLocal, localDay, validateSet, upsertSet, removeSet, quickValues, sortedExercises,
-  daySummary, setsOfDay, slug, findOrCreateExercise, parseImport, mergeImport, exportNeeded, lastDays,
+  daySummary, setsOfDay, slug, findOrCreateExercise, parseImport, mergeImport, exportNeeded, lastDays, goals, history,
 } from './logic.js';
 
 const KEY = 'nebenbei-stark/v1';
@@ -87,14 +88,25 @@ function setDialog(title, set, onSave, deletable) {
 
 function exDialog(ex) {
   const dlg = $('dlgEx'), f = dlg.querySelector('form');
-  $('exTitle').textContent = ex ? 'Übung umbenennen' : 'Übung anlegen';
+  $('exTitle').textContent = ex ? 'Übung bearbeiten' : 'Übung anlegen';
   $('exQuick').hidden = !!ex;
+  $('exGoals').hidden = !ex;
   f.q1.disabled = f.q2.disabled = !!ex;
+  f.dayGoal.disabled = f.weekGoal.disabled = !ex;
   f.name.value = ex?.name ?? '';
+  if (ex) {
+    const g = goals(state, ex, today());
+    f.dayGoal.value = ex.dayGoal ?? ''; f.dayGoal.placeholder = g.day.auto ? `automatisch: ${g.day.auto}` : 'automatisch';
+    f.weekGoal.value = ex.weekGoal ?? ''; f.weekGoal.placeholder = g.week.auto ? `automatisch: ${g.week.auto}` : 'automatisch';
+  }
   openDialog(dlg, (v) => {
     const name = f.name.value.trim();
     if (v !== 'ok' || !name) return;
-    if (ex) return commit({ ...state, exercises: state.exercises.map((e) => (e.id === ex.id ? { ...e, name } : e)) });
+    if (ex) {
+      const dayGoal = f.dayGoal.value === '' ? null : Number(f.dayGoal.value), weekGoal = f.weekGoal.value === '' ? null : Number(f.weekGoal.value);
+      if (![dayGoal, weekGoal].every((n) => n === null || (Number.isInteger(n) && n >= 1))) return toast('Ziele müssen leer oder ganze Zahlen ab 1 sein.');
+      return commit({ ...state, exercises: state.exercises.map((e) => (e.id === ex.id ? { ...e, name, dayGoal, weekGoal } : e)) });
+    }
     const q = [Number(f.q1.value), Number(f.q2.value)];
     if (!q.every((n) => Number.isInteger(n) && n >= 1)) return toast('Startwerte müssen ganze Zahlen ab 1 sein.');
     commit({ ...state, exercises: [...state.exercises, { id: crypto.randomUUID(), name, archived: false, startQuick: q, createdAt: isoLocal(new Date()) }] });
@@ -128,9 +140,14 @@ function render() {
   const exs = sortedExercises(state);
   const cards = exs.map((ex) => {
     const s = sums.get(ex.id) ?? { sets: 0, reps: 0 };
+    const g = goals(state, ex, day);
+    const goal = (label, aria, x) => (x.goal ? h('span', {},
+      h('span', {}, `${label} ${x.reps}/${x.goal}${x.reps >= x.goal ? ' ✓' : ''}`),
+      h('progress', { max: x.goal, value: Math.min(x.reps, x.goal), ariaLabel: `${aria} ${ex.name}` })) : '');
     return h('div', { className: 'card' },
       h('h3', {}, ex.name),
       h('p', {}, `${s.sets} ${s.sets === 1 ? 'Satz' : 'Sätze'} · ${s.reps} Wdh.`),
+      g.day.goal || g.week.goal ? h('button', { type: 'button', className: 'goals', title: 'Ziele ändern', onclick: () => exDialog(ex) }, goal('Tag', 'Tagesziel', g.day), goal('Woche', 'Wochenziel', g.week)) : '',
       h('div', { className: 'quick' },
         ...quickValues(state, ex.id).map((q) => h('button', { type: 'button', onclick: () => add(ex.id, q) }, `+${q}`)),
         h('button', { type: 'button', className: 'more', "aria-label": `Freie Eingabe für ${ex.name}`, onclick: () => setDialog(ex.name, {}, (r) => r && add(ex.id, r.reps, r.weightKg)) }, '…')));
@@ -144,12 +161,29 @@ function render() {
     h('button', { type: 'button', onclick: () => editSet(s) },
       `${new Date(s.at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} · ${nameOf(s.exerciseId)} · ${s.reps} Wdh.${kg(s.weightKg)}`))));
   const week = lastDays(state, day);
-  const max = Math.max(1, ...week.map((d) => d.reps));
-  $('week').replaceChildren(...week.map((d) => h('li', {},
-    h('span', { className: 'day' }, d.day === day ? 'Heute' : new Date(`${d.day}T12:00`).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'numeric' })),
-    h('span', { className: 'bar', style: `--w:${(d.reps / max) * 100}%`, ariaHidden: 'true' }),
-    h('span', { className: 'num' }, d.reps ? `${d.reps} Wdh.` : '–'),
-    d.items.length ? h('span', { className: 'split' }, d.items.map((s) => `${s.name} ${s.reps}`).join(' · ')) : '')));
+  $('week').replaceChildren(...bars(week.map((d) => ({
+    label: d.day === day ? 'Heute' : new Date(`${d.day}T12:00`).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'numeric' }),
+    reps: d.reps, split: d.items.map((s) => `${s.name} ${s.reps}`).join(' · ') }))));
+
+  const hx = $('histEx'), sel = hx.value, unit = $('histUnit').value;
+  hx.replaceChildren(...exs.map((ex) => h('option', { value: ex.id }, ex.name)));
+  if (exs.some((ex) => ex.id === sel)) hx.value = sel;
+  hx.closest('section').hidden = !exs.length;
+  $('hist').replaceChildren(...bars(exs.length ? history(state, hx.value, unit, day).map((r, i) => ({
+    label: unit === 'month'
+      ? new Date(`${r.from}T12:00`).toLocaleDateString('de-DE', { month: 'short', year: '2-digit' })
+      : i === 0 ? 'Diese Woche' : `ab ${new Date(`${r.from}T12:00`).toLocaleDateString('de-DE', { day: 'numeric', month: 'numeric' })}`,
+    reps: r.reps })) : []));
+}
+
+// Balkenzeilen: Beschriftung, Balken relativ zum größten Wert, Zahl, optional Aufteilung darunter.
+function bars(rows) {
+  const max = Math.max(1, ...rows.map((r) => r.reps));
+  return rows.map((r) => h('li', {},
+    h('span', {}, r.label),
+    h('span', { className: 'bar', style: `--w:${(r.reps / max) * 100}%`, ariaHidden: 'true' }),
+    h('span', { className: 'num' }, r.reps ? `${r.reps} Wdh.` : '–'),
+    r.split ? h('span', { className: 'split' }, r.split) : ''));
 }
 
 // ---- Daten & Übungen ----
@@ -159,7 +193,7 @@ function renderData() {
     return h('li', {},
       h('strong', {}, ex.name + (ex.archived ? ' (archiviert)' : '')),
       h('input', { readOnly: true, value: url, "aria-label": `Direkt-Link ${ex.name}`, onfocus: (e) => e.target.select() }),
-      h('button', { type: 'button', onclick: () => { $('dlgData').close(); exDialog(ex); } }, 'Umbenennen'),
+      h('button', { type: 'button', onclick: () => { $('dlgData').close(); exDialog(ex); } }, 'Bearbeiten'),
       h('button', { type: 'button', onclick: () => { commit({ ...state, exercises: state.exercises.map((e) => (e.id === ex.id ? { ...e, archived: !e.archived } : e)) }); renderData(); } }, ex.archived ? 'Wiederherstellen' : 'Archivieren'));
   }));
 }
@@ -214,6 +248,20 @@ function directEntry() {
   add(r.exercise.id, Number(n));
 }
 
+$('histEx').onchange = $('histUnit').onchange = () => render();
+
+// ---- Update-Hinweis: version.js frisch vom Server mit der geladenen Version vergleichen ----
+const loaded = self.APP_VERSION;
+async function checkUpdate() {
+  try {
+    const v = Number((await (await fetch('version.js', { cache: 'no-store' })).text()).match(/APP_VERSION\s*=\s*(\d+)/)?.[1]);
+    $('updateBanner').hidden = !(v > loaded);
+  } catch {} // offline: kein Hinweis
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(); });
+$('reload').onclick = () => location.reload();
+
 render();
 directEntry();
+checkUpdate();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
