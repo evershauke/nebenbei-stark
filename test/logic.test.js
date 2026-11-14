@@ -64,7 +64,12 @@ test('findOrCreateExercise: Slug mit Umlauten, Neuanlage, Reaktivierung', () => 
   assert.equal(r.state.exercises[0].archived, false);
   assert.equal(L.findOrCreateExercise(s, 'x').exercise.id, 'x');
   const n = L.findOrCreateExercise(empty(), 'liegestuetz-variante', 7);
-  assert.equal(n.exercise.name, 'Liegestuetz variante');
+  assert.equal(n.exercise.name, 'Liegestütz variante');
+  const nm = (u) => L.findOrCreateExercise(empty(), u).exercise.name;
+  assert.equal(nm('klimmzuege'), 'Klimmzüge');
+  assert.equal(nm('Klimmzüge'), 'Klimmzüge');
+  assert.equal(nm('ueberzug-neue-bauer'), 'Überzug neue bauer');
+  assert.equal(nm('squeeze-kraeftig-hoehe'), 'Squeeze kräftig höhe');
   assert.deepEqual(n.exercise.startQuick, [7, 10]);
   assert.equal(n.state.exercises.length, 1);
 });
@@ -142,15 +147,15 @@ test('weekStart/addDays: Montag, Monats- und Sommerzeitwechsel', () => {
 
 const at = (day, reps, ex = 'a') => ({ id: `${day}-${reps}-${ex}`, exerciseId: ex, at: `${day}T10:00:00+01:00`, reps });
 
-test('history: Wochen und Monate, neueste zuerst', () => {
+test('periodTotals: Wochen und Monate, neueste zuerst', () => {
   const st = { exercises: [{ id: 'a' }], sets: [at('2026-11-14', 5), at('2026-11-09', 3), at('2026-11-08', 7), at('2026-10-31', 2), at('2026-11-14', 9, 'b')] };
-  const w = L.history(st, 'a', 'week', '2026-11-14', 3);
+  const w = L.periodTotals(st, 'a', 'week', '2026-11-14', 3);
   assert.deepEqual(w, [
     { from: '2026-11-09', to: '2026-11-15', reps: 8 },
     { from: '2026-11-02', to: '2026-11-08', reps: 7 },
     { from: '2026-10-26', to: '2026-11-01', reps: 2 },
   ]);
-  const m = L.history(st, 'a', 'month', '2026-11-14', 2);
+  const m = L.periodTotals(st, 'a', 'month', '2026-11-14', 2);
   assert.deepEqual(m, [{ from: '2026-11-01', to: '2026-11-30', reps: 15 }, { from: '2026-10-01', to: '2026-10-31', reps: 2 }]);
 });
 

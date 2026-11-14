@@ -28,11 +28,15 @@
   </div>
   <section id="cards" aria-label="Übungen"></section>
   <section aria-labelledby="todayH">
-    <h2 id="todayH">Heute</h2>
+    <div class="head">
+      <h2 id="todayH">Heute</h2>
+      <button type="button" id="backToday" hidden>Zurück zu heute</button>
+    </div>
     <ul id="today"></ul>
   </section>
   <section aria-labelledby="weekH">
     <h2 id="weekH">Letzte 7 Tage</h2>
+    <p class="hint">Tag antippen, um seine Sätze zu sehen und zu bearbeiten.</p>
     <ul id="week" class="bars"></ul>
   </section>
   <section aria-labelledby="histH">

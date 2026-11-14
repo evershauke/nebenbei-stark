@@ -84,7 +84,9 @@ export function findOrCreateExercise(state, u, n = 5) {
     const exercise = { ...found, archived: false };
     return { state: { ...state, exercises: state.exercises.map((e) => (e === found ? exercise : e)) }, exercise };
   }
-  const name = u.replace(/-+/g, ' ').trim();
+  // Umlaute aus der Link-Schreibweise zurück („klimmzuege“ → „Klimmzüge“); nicht nach a/e/q (Bauer, neue, Squeeze).
+  const name = u.replace(/-+/g, ' ').trim()
+    .replace(/(?<![aeq])ue/gi, (m) => (m[0] === 'U' ? 'Ü' : 'ü')).replace(/(?<![e])ae/gi, (m) => (m[0] === 'A' ? 'Ä' : 'ä')).replace(/oe/gi, (m) => (m[0] === 'O' ? 'Ö' : 'ö'));
   const exercise = {
     id: crypto.randomUUID(), name: name.charAt(0).toUpperCase() + name.slice(1),
     archived: false, startQuick: [n, n + 3], createdAt: isoLocal(new Date()),
@@ -159,7 +161,7 @@ function repsByDay(state, exerciseId) {
 const sumRange = (byDay, from, to) => { let n = 0; for (const [d, r] of byDay) if (d >= from && d <= to) n += r; return n; };
 
 // Verlauf je Übung: n Wochen (ab Montag) oder Monate bis einschließlich `today`, neueste zuerst.
-export function history(state, exerciseId, unit, today, n = 12) {
+export function periodTotals(state, exerciseId, unit, today, n = 12) {
   const byDay = repsByDay(state, exerciseId);
   const [y, m] = ymd(today);
   return Array.from({ length: n }, (_, i) => {

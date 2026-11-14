@@ -38,7 +38,11 @@ button.primary, .quick button, .banner button, dialog button[value=ok] { backgro
 #today { list-style: none; margin: 0; padding: 0; }
 #today button { width: 100%; justify-content: flex-start; text-align: left; margin-bottom: .35rem; }
 .bars { list-style: none; margin: 0; padding: 0; }
-.bars li { display: grid; grid-template-columns: 6.5rem 1fr 4.5rem; align-items: center; gap: .25rem .75rem; padding: .4rem 0; border-bottom: 1px solid var(--line); }
+.bars li { border-bottom: 1px solid var(--line); }
+.bars li > * { width: 100%; display: grid; grid-template-columns: 6.5rem 1fr 4.5rem; align-items: center; gap: .25rem .75rem; padding: .4rem 0; }
+.bars button { min-height: 48px; border: 0; border-radius: 0; background: none; text-align: left; justify-content: initial; }
+.bars button[aria-current] { box-shadow: inset 3px 0 var(--accent); padding-left: .5rem; }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .bars .bar { height: 12px; width: var(--w); border-radius: 0 4px 4px 0; background: var(--accent); }
 .bars .num { text-align: right; font-variant-numeric: tabular-nums; }
 .bars .split { grid-column: 2 / -1; color: var(--muted); font-size: .8rem; }
