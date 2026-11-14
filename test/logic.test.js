@@ -170,3 +170,12 @@ test('goals: automatisch +5 % aufgerundet, manuell überschreibt, ohne Daten nul
   assert.equal(o.week.goal, 32);
   assert.deepEqual(L.autoGoals({ exercises: [], sets: [] }, 'a', '2026-11-14'), { day: null, week: null });
 });
+
+test('streak: Wochen in Folge mit Wochenziel, laufende Woche zählt erst wenn geschafft', () => {
+  const ex = { id: 'a', weekGoal: 10 };
+  const sets = [at('2026-11-10', 5), at('2026-11-03', 12), at('2026-10-27', 10), at('2026-10-20', 3)];
+  assert.equal(L.streak({ exercises: [ex], sets }, ex, '2026-11-14'), 2);
+  assert.equal(L.streak({ exercises: [ex], sets: [...sets, at('2026-11-11', 6)] }, ex, '2026-11-14'), 3);
+  assert.deepEqual(L.weekGoalHits({ exercises: [ex], sets }, ex, '2026-11-14', 2).map((w) => w.hit), [false, true]);
+  assert.equal(L.streak({ exercises: [{ id: 'a' }], sets: [] }, { id: 'a' }, '2026-11-14'), 0);
+});

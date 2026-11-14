@@ -90,3 +90,9 @@ dialog input:not([type=file]) { display: block; width: 100%; min-height: 48px; m
 @starting-style { #toast:popover-open { opacity: 0; translate: 0 1rem; } }
 #toast button { background: transparent; color: inherit; border-color: currentcolor; }
 @media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
+
+/* Belohnung beim Eintragen */
+.quick button { @media (prefers-reduced-motion: no-preference) { transition: scale 120ms ease-out; &:active { scale: 0.92; } } }
+.float, .confetti { position: fixed; z-index: 10; pointer-events: none; }
+.float { font-size: 1.8rem; font-weight: 800; color: var(--accent); text-shadow: 0 2px 8px rgb(0 0 0 / .25); }
+.confetti { width: 8px; height: 12px; margin: -6px 0 0 -4px; border-radius: 2px; }

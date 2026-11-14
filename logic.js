@@ -192,3 +192,18 @@ export function goals(state, ex, today) {
     week: { goal: ex.weekGoal ?? a.week, auto: a.week, reps: sumRange(byDay, weekStart(today), today) },
   };
 }
+
+// Wochen (neueste zuerst) mit dem Ziel, das in der jeweiligen Woche galt, und ob es erreicht wurde.
+export function weekGoalHits(state, ex, today, n = 12) {
+  return periodTotals(state, ex.id, "week", today, n).map((p) => {
+    const goal = ex.weekGoal ?? autoGoals(state, ex.id, p.from).week;
+    return { ...p, goal, hit: goal != null && p.reps >= goal };
+  });
+}
+
+// Wochen in Folge mit erreichtem Wochenziel; die laufende Woche zählt erst, wenn sie geschafft ist, bricht die Serie aber nicht.
+export function streak(state, ex, today) {
+  const [cur, ...past] = weekGoalHits(state, ex, today, 53);
+  const n = past.findIndex((w) => !w.hit);
+  return (cur.hit ? 1 : 0) + (n === -1 ? past.length : n);
+}

@@ -1,7 +1,7 @@
 import './version.js';
 import {
   isoLocal, localDay, validateSet, upsertSet, removeSet, quickValues, sortedExercises,
-  setsOfDay, findOrCreateExercise, parseImport, mergeImport, exportNeeded, lastDays, goals, periodTotals,
+  setsOfDay, findOrCreateExercise, parseImport, mergeImport, exportNeeded, lastDays, goals, periodTotals, streak, weekGoalHits,
 } from './logic.js';
 
 const KEY = 'nebenbei-stark/v1';
@@ -116,10 +116,47 @@ function exDialog(ex) {
 }
 
 // ---- Sätze ----
-function add(exerciseId, reps, weightKg = null) {
+function add(exerciseId, reps, weightKg = null, from = null) {
+  const ex = state.exercises.find((e) => e.id === exerciseId);
+  const rect = from?.getBoundingClientRect(), before = goals(state, ex, today());
   const set = { id: crypto.randomUUID(), exerciseId, at: isoLocal(new Date()), reps, weightKg };
   commit(upsertSet(state, set));
-  toast(`${nameOf(exerciseId)} +${reps} gespeichert`, () => commit(removeSet(state, set.id)));
+  const after = goals(state, ex, today());
+  const reached = (k) => after[k].goal && before[k].reps < after[k].goal && after[k].reps >= after[k].goal;
+  const card = document.querySelector(`[data-ex="${CSS.escape(exerciseId)}"]`);
+  const undo = () => commit(removeSet(state, set.id));
+  if (reached('week') || reached('day')) {
+    navigator.vibrate?.([30, 60, 30, 60, 120]);
+    confetti(rect ?? card?.getBoundingClientRect());
+    const n = streak(state, ex, today());
+    return toast(reached('week') ? `Wochenziel geschafft! 🔥 ${n} ${n === 1 ? 'Woche' : 'Wochen'} in Folge` : `${ex.name}: Tagesziel geschafft! 🎉`, undo);
+  }
+  navigator.vibrate?.(15);
+  if (rect) burst(`+${reps}`, rect);
+  if (!calm()) card?.animate([{ scale: 1 }, { scale: 1.025 }, { scale: 1 }], { duration: 300, easing: 'ease-out' });
+  toast(`${nameOf(exerciseId)} +${reps} gespeichert`, undo);
+}
+
+// ---- Belohnung: schwebende Zahl, Konfetti (nur ohne „Bewegung reduzieren“) ----
+const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fx = (cls, text, x, y) => document.body.appendChild(h('span', { className: cls, ariaHidden: 'true', style: `left:${x}px;top:${y}px` }, text));
+function burst(text, r) {
+  if (calm()) return;
+  const el = fx('float', text, r.left + r.width / 2, r.top);
+  el.animate([{ translate: '-50% 0', scale: 0.8 }, { translate: '-50% -3rem', scale: 1.5, opacity: 1, offset: 0.6 }, { translate: '-50% -4.5rem', scale: 1.6, opacity: 0 }], { duration: 750, easing: 'cubic-bezier(.2,.8,.3,1)' })
+    .finished.then(() => el.remove());
+}
+function confetti(r) {
+  if (calm() || !r) return;
+  const colors = ['var(--accent)', '#f5c542', '#ff8a65', '#64b5f6', '#ba68c8'];
+  for (let i = 0; i < 40; i++) {
+    const el = fx('confetti', '', r.left + r.width / 2, r.top + r.height / 2), a = Math.random() * 2 * Math.PI, d = 60 + Math.random() * 120;
+    el.style.background = colors[i % colors.length];
+    el.animate([{ translate: '0 0', rotate: '0turn', opacity: 1 },
+      { translate: `${Math.cos(a) * d}px ${Math.sin(a) * d - 40}px`, rotate: `${Math.random() * 2}turn`, opacity: 1, offset: 0.5 },
+      { translate: `${Math.cos(a) * d * 1.3}px ${Math.sin(a) * d + 160}px`, rotate: `${Math.random() * 4}turn`, opacity: 0 }],
+    { duration: 1200 + Math.random() * 600, easing: 'ease-out' }).finished.then(() => el.remove());
+  }
 }
 
 function editSet(set) {
@@ -142,14 +179,15 @@ function render() {
   const cards = exs.map((ex) => {
     const g = goals(state, ex, day);
     // Ohne Ziel (noch keine Daten) nur die Zahl, sonst „11/9 ✓“ mit Balken.
-    const goal = (label, aria, x) => h('span', {},
-      h('span', {}, `${label} ${x.reps}${x.goal ? `/${x.goal}${x.reps >= x.goal ? ' ✓' : ''}` : ' Wdh.'}`),
+    const n = streak(state, ex, day);
+    const goal = (label, aria, x, extra = '') => h('span', {},
+      h('span', {}, `${label} ${x.reps}${x.goal ? `/${x.goal}${x.reps >= x.goal ? ' ✓' : ''}` : ' Wdh.'}${extra}`),
       x.goal ? h('progress', { max: x.goal, value: Math.min(x.reps, x.goal), ariaLabel: `${aria} ${ex.name}` }) : '');
-    return h('div', { className: 'card' },
+    return h('div', { className: 'card', 'data-ex': ex.id },
       h('h3', {}, ex.name),
-      h('button', { type: 'button', className: 'goals', title: 'Ziele ändern', onclick: () => exDialog(ex) }, goal('Heute', 'Tagesziel', g.day), goal('Woche', 'Wochenziel', g.week)),
+      h('button', { type: 'button', className: 'goals', title: 'Ziele ändern', onclick: () => exDialog(ex) }, goal('Heute', 'Tagesziel', g.day), goal('Woche', 'Wochenziel', g.week, n ? ` · 🔥${n}` : '')),
       h('div', { className: 'quick' },
-        ...quickValues(state, ex.id).map((q) => h('button', { type: 'button', onclick: () => add(ex.id, q) }, `+${q}`)),
+        ...quickValues(state, ex.id).map((q) => h('button', { type: 'button', onclick: (e) => add(ex.id, q, null, e.currentTarget) }, `+${q}`)),
         h('button', { type: 'button', className: 'more', "aria-label": `Freie Eingabe für ${ex.name}`, onclick: () => setDialog(ex.name, {}, (r) => r && add(ex.id, r.reps, r.weightKg)) }, '…')));
   });
   cards.push(exs.length
@@ -168,11 +206,12 @@ function render() {
   hx.replaceChildren(...exs.map((ex) => h('option', { value: ex.id }, ex.name)));
   if (exs.some((ex) => ex.id === sel)) hx.value = sel;
   hx.closest('section').hidden = !exs.length;
-  const hist = exs.length ? periodTotals(state, hx.value, unit, day).map((r, i) => ({
+  const hex = exs.find((ex) => ex.id === hx.value);
+  const hist = exs.length ? (unit === 'week' ? weekGoalHits(state, hex, day) : periodTotals(state, hx.value, unit, day)).map((r, i) => ({
     label: unit === 'month'
       ? new Date(`${r.from}T12:00`).toLocaleDateString('de-DE', { month: 'short', year: '2-digit' })
       : i === 0 ? 'Diese Woche' : `ab ${new Date(`${r.from}T12:00`).toLocaleDateString('de-DE', { day: 'numeric', month: 'numeric' })}`,
-    reps: r.reps })) : [];
+    reps: r.reps, hit: r.hit })) : [];
   const hmax = Math.max(1, ...hist.map((r) => r.reps));
   $('hist').replaceChildren(...hist.map((r) => h('li', {}, h('div', {}, ...barKids(r, hmax)))));
 }
@@ -186,7 +225,7 @@ function barKids(r, max) {
   return [
     h('span', {}, r.label),
     h('span', { className: 'bar', style: `--w:${(r.reps / max) * 100}%`, ariaHidden: 'true' }),
-    h('span', { className: 'num' }, r.reps ? `${r.reps} Wdh.` : '–'),
+    h('span', { className: 'num' }, r.reps ? `${r.reps} Wdh.${r.hit ? ' ✓' : ''}` : '–'),
     r.split ? h('span', { className: 'split' }, r.split) : ''];
 }
 
