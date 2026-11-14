@@ -17,6 +17,10 @@
     <h1 id="date"></h1>
     <button type="button" id="menu" aria-label="Daten &amp; Übungen">⋯</button>
   </header>
+  <nav class="tabs" aria-label="Ansicht">
+    <a href="#" id="navToday" aria-current="page">Heute</a>
+    <a href="#statistik" id="navStats">Statistik</a>
+  </nav>
   <div id="error" role="alert" hidden></div>
   <div id="updateBanner" class="banner" hidden>
     <span>Neue Version verfügbar</span>
@@ -26,17 +30,17 @@
     <span>Letzter Export &gt; 14 Tage – jetzt sichern</span>
     <button type="button" id="exportNow">Sichern</button>
   </div>
-  <section id="cards" aria-label="Übungen"></section>
-  <section aria-labelledby="todayH">
-    <div class="head">
-      <h2 id="todayH">Heute</h2>
-      <button type="button" id="backToday" hidden>Zurück zu heute</button>
-    </div>
-    <ul id="today"></ul>
-  </section>
+  <div id="viewToday">
+    <section id="cards" aria-label="Übungen"></section>
+    <section aria-labelledby="todayH">
+      <h2 id="todayH">Sätze heute</h2>
+      <ul id="today" class="sets"></ul>
+    </section>
+  </div>
+  <div id="viewStats" hidden>
   <section aria-labelledby="weekH">
     <h2 id="weekH">Letzte 7 Tage</h2>
-    <p class="hint">Tag antippen, um seine Sätze zu sehen und zu bearbeiten.</p>
+    <p class="hint">Tag antippen, um seine Sätze zu bearbeiten.</p>
     <ul id="week" class="bars"></ul>
   </section>
   <section aria-labelledby="histH">
@@ -50,6 +54,7 @@
     </div>
     <ul id="hist" class="bars"></ul>
   </section>
+  </div>
 </main>
 
 <div id="toasts" role="region" aria-label="Benachrichtigungen">

@@ -1,7 +1,7 @@
 import './version.js';
 import {
   isoLocal, localDay, validateSet, upsertSet, removeSet, quickValues, sortedExercises,
-  daySummary, setsOfDay, findOrCreateExercise, parseImport, mergeImport, exportNeeded, lastDays, goals, periodTotals,
+  setsOfDay, findOrCreateExercise, parseImport, mergeImport, exportNeeded, lastDays, goals, periodTotals,
 } from './logic.js';
 
 const KEY = 'nebenbei-stark/v1';
@@ -35,7 +35,7 @@ function commit(next) { state = next; save(); render(); }
 
 const nameOf = (id) => state.exercises.find((e) => e.id === id)?.name ?? '?';
 const today = () => localDay(isoLocal(new Date()));
-let shownDay = null; // null = heute; sonst ein früherer Tag aus „Letzte 7 Tage“
+let openDay = null; // in „Letzte 7 Tage“ aufgeklappter Tag, bleibt beim Neuzeichnen offen
 const dayLabel = (d) => new Date(`${d}T12:00`).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'numeric' });
 const kg = (w) => (w || w === 0 ? ` · ${w} kg` : '');
 
@@ -138,18 +138,16 @@ function render() {
   $('date').textContent = new Date().toLocaleDateString('de-DE', { dateStyle: 'full' });
   $('exportBanner').hidden = !exportNeeded(state, Date.now());
   const day = today();
-  const sums = new Map(daySummary(state, day).map((s) => [s.exerciseId, s]));
   const exs = sortedExercises(state);
   const cards = exs.map((ex) => {
-    const s = sums.get(ex.id) ?? { sets: 0, reps: 0 };
     const g = goals(state, ex, day);
-    const goal = (label, aria, x) => (x.goal ? h('span', {},
-      h('span', {}, `${label} ${x.reps}/${x.goal}${x.reps >= x.goal ? ' ✓' : ''}`),
-      h('progress', { max: x.goal, value: Math.min(x.reps, x.goal), ariaLabel: `${aria} ${ex.name}` })) : '');
+    // Ohne Ziel (noch keine Daten) nur die Zahl, sonst „11/9 ✓“ mit Balken.
+    const goal = (label, aria, x) => h('span', {},
+      h('span', {}, `${label} ${x.reps}${x.goal ? `/${x.goal}${x.reps >= x.goal ? ' ✓' : ''}` : ' Wdh.'}`),
+      x.goal ? h('progress', { max: x.goal, value: Math.min(x.reps, x.goal), ariaLabel: `${aria} ${ex.name}` }) : '');
     return h('div', { className: 'card' },
       h('h3', {}, ex.name),
-      h('p', {}, `${s.sets} ${s.sets === 1 ? 'Satz' : 'Sätze'} · ${s.reps} Wdh.`),
-      g.day.goal || g.week.goal ? h('button', { type: 'button', className: 'goals', title: 'Ziele ändern', onclick: () => exDialog(ex) }, goal('Tag', 'Tagesziel', g.day), goal('Woche', 'Wochenziel', g.week)) : '',
+      h('button', { type: 'button', className: 'goals', title: 'Ziele ändern', onclick: () => exDialog(ex) }, goal('Heute', 'Tagesziel', g.day), goal('Woche', 'Wochenziel', g.week)),
       h('div', { className: 'quick' },
         ...quickValues(state, ex.id).map((q) => h('button', { type: 'button', onclick: () => add(ex.id, q) }, `+${q}`)),
         h('button', { type: 'button', className: 'more', "aria-label": `Freie Eingabe für ${ex.name}`, onclick: () => setDialog(ex.name, {}, (r) => r && add(ex.id, r.reps, r.weightKg)) }, '…')));
@@ -159,40 +157,37 @@ function render() {
     : h('div', {}, h('p', { className: 'hint' }, 'Noch keine Übung. Lege deine erste an und tippe danach nebenbei auf +5.'),
       h('button', { type: 'button', className: 'primary', onclick: () => exDialog() }, 'Erste Übung anlegen')));
   $('cards').replaceChildren(...cards);
-  const sd = shownDay ?? day;
-  $('todayH').textContent = sd === day ? 'Heute' : dayLabel(sd);
-  $('backToday').hidden = sd === day;
-  $('today').replaceChildren(...setsOfDay(state, sd).map((s) => h('li', {},
-    h('button', { type: 'button', onclick: () => editSet(s) },
-      `${new Date(s.at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} · ${nameOf(s.exerciseId)} · ${s.reps} Wdh.${kg(s.weightKg)}`))));
-  const week = lastDays(state, day);
-  $('week').replaceChildren(...bars(week.map((d) => ({
-    label: d.day === day ? 'Heute' : dayLabel(d.day), current: d.day === sd,
-    reps: d.reps, split: d.items.map((s) => `${s.name} ${s.reps}`).join(' · '),
-    pick: () => { shownDay = d.day === day ? null : d.day; render(); $('todayH').scrollIntoView({ block: 'start' }); } }))));
+  $('today').replaceChildren(...setItems(day));
+  const week = lastDays(state, day), wmax = Math.max(1, ...week.map((d) => d.reps));
+  $('week').replaceChildren(...week.map((d) => h('li', {},
+    h('details', { name: 'tag', open: d.day === openDay, ontoggle: (e) => { if (e.target.open) openDay = d.day; else if (openDay === d.day) openDay = null; } },
+      h('summary', {}, ...barKids({ label: d.day === day ? 'Heute' : dayLabel(d.day), reps: d.reps, split: d.items.map((s) => `${s.name} ${s.reps}`).join(' · ') }, wmax)),
+      h('ul', { className: 'sets' }, ...setItems(d.day))))));
 
   const hx = $('histEx'), sel = hx.value, unit = $('histUnit').value;
   hx.replaceChildren(...exs.map((ex) => h('option', { value: ex.id }, ex.name)));
   if (exs.some((ex) => ex.id === sel)) hx.value = sel;
   hx.closest('section').hidden = !exs.length;
-  $('hist').replaceChildren(...bars(exs.length ? periodTotals(state, hx.value, unit, day).map((r, i) => ({
+  const hist = exs.length ? periodTotals(state, hx.value, unit, day).map((r, i) => ({
     label: unit === 'month'
       ? new Date(`${r.from}T12:00`).toLocaleDateString('de-DE', { month: 'short', year: '2-digit' })
       : i === 0 ? 'Diese Woche' : `ab ${new Date(`${r.from}T12:00`).toLocaleDateString('de-DE', { day: 'numeric', month: 'numeric' })}`,
-    reps: r.reps })) : []));
+    reps: r.reps })) : [];
+  const hmax = Math.max(1, ...hist.map((r) => r.reps));
+  $('hist').replaceChildren(...hist.map((r) => h('li', {}, h('div', {}, ...barKids(r, hmax)))));
 }
 
-// Balkenzeilen: Beschriftung, Balken relativ zum größten Wert, Zahl, optional Aufteilung darunter.
-function bars(rows) {
-  const max = Math.max(1, ...rows.map((r) => r.reps));
-  return rows.map((r) => {
-    const kids = [
-      h('span', {}, r.label),
-      h('span', { className: 'bar', style: `--w:${(r.reps / max) * 100}%`, ariaHidden: 'true' }),
-      h('span', { className: 'num' }, r.reps ? `${r.reps} Wdh.` : '–'),
-      r.split ? h('span', { className: 'split' }, r.split) : ''];
-    return h('li', {}, r.pick ? h('button', { type: 'button', onclick: r.pick, ...(r.current && { 'aria-current': 'date' }) }, ...kids) : h('div', {}, ...kids));
-  });
+const setItems = (day) => setsOfDay(state, day).map((s) => h('li', {},
+  h('button', { type: 'button', onclick: () => editSet(s) },
+    `${new Date(s.at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} · ${nameOf(s.exerciseId)} · ${s.reps} Wdh.${kg(s.weightKg)}`)));
+
+// Balkenzeile: Beschriftung, Balken relativ zum größten Wert, Zahl, optional Aufteilung darunter.
+function barKids(r, max) {
+  return [
+    h('span', {}, r.label),
+    h('span', { className: 'bar', style: `--w:${(r.reps / max) * 100}%`, ariaHidden: 'true' }),
+    h('span', { className: 'num' }, r.reps ? `${r.reps} Wdh.` : '–'),
+    r.split ? h('span', { className: 'split' }, r.split) : ''];
 }
 
 // ---- Daten & Übungen ----
@@ -257,7 +252,14 @@ function directEntry() {
   add(r.exercise.id, Number(n));
 }
 
-$('backToday').onclick = () => { shownDay = null; render(); };
+// Ansichten über den URL-Hash: Zurück-Geste auf Android führt von „Statistik“ zu „Heute“.
+function showView() {
+  const stats = location.hash === '#statistik';
+  $('viewToday').hidden = stats; $('viewStats').hidden = !stats;
+  $('navToday').ariaCurrent = stats ? null : 'page'; $('navStats').ariaCurrent = stats ? 'page' : null;
+  scrollTo(0, 0);
+}
+addEventListener('hashchange', showView);
 $('histEx').onchange = $('histUnit').onchange = () => render();
 
 // ---- Update-Hinweis: version.js frisch vom Server mit der geladenen Version vergleichen ----
@@ -272,6 +274,7 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 $('reload').onclick = () => location.reload();
 
 render();
+showView();
 directEntry();
 checkUpdate();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');

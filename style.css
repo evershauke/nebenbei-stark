@@ -30,26 +30,30 @@ button.primary, .quick button, .banner button, dialog button[value=ok] { backgro
 .danger { color: var(--danger); }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 1rem; padding: .75rem 1rem 1rem; margin: .75rem 0; }
 .card h3 { margin: 0; font-size: 1.1rem; }
-.card p { margin: 0 0 .5rem; color: var(--muted); font-size: .9rem; }
 .quick { display: flex; gap: .5rem; }
 .quick button { flex: 1; font-size: 1.4rem; min-height: 56px; }
 .quick button.more { flex: 0 0 56px; background: var(--card); color: var(--fg); border-color: var(--line); }
 #cards > .primary { width: 100%; }
-#today { list-style: none; margin: 0; padding: 0; }
-#today button { width: 100%; justify-content: flex-start; text-align: left; margin-bottom: .35rem; }
+.sets { list-style: none; margin: 0; padding: 0; }
+.sets button { width: 100%; justify-content: flex-start; text-align: left; margin-bottom: .35rem; }
 .bars { list-style: none; margin: 0; padding: 0; }
 .bars li { border-bottom: 1px solid var(--line); }
-.bars li > * { width: 100%; display: grid; grid-template-columns: 6.5rem 1fr 4.5rem; align-items: center; gap: .25rem .75rem; padding: .4rem 0; }
-.bars button { min-height: 48px; border: 0; border-radius: 0; background: none; text-align: left; justify-content: initial; }
-.bars button[aria-current] { box-shadow: inset 3px 0 var(--accent); padding-left: .5rem; }
-.head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.bars li > div, .bars summary { width: 100%; display: grid; grid-template-columns: 6rem 1fr 5.5rem; align-items: center; gap: .25rem .75rem; padding: .4rem 0; }
+.bars summary { min-height: 48px; cursor: pointer; }
+.bars details[open] summary .num::after { content: " ▴"; }
+.bars details:not([open]) summary .num::after { content: " ▾"; color: var(--muted); }
+.bars details .sets { padding: .25rem 0 .5rem; }
+.tabs { display: flex; margin: .75rem 0 0; border-bottom: 1px solid var(--line); }
+.tabs a { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; min-height: 48px; color: var(--muted); text-decoration: none; font-weight: 600; }
+.tabs a[aria-current=page] { color: var(--fg); }
+.tabs a[aria-current=page]::after { content: ""; position: absolute; inset: auto 0 -1px; border-bottom: 3px solid var(--accent); }
 .bars .bar { height: 12px; width: var(--w); border-radius: 0 4px 4px 0; background: var(--accent); }
-.bars .num { text-align: right; font-variant-numeric: tabular-nums; }
+.bars .num { white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
 .bars .split { grid-column: 2 / -1; color: var(--muted); font-size: .8rem; }
 .row { display: flex; gap: .5rem; margin-bottom: .5rem; }
 .row select { flex: 1; min-height: 48px; padding: 0 .75rem; font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: .75rem; }
 .row select:last-child { flex: 0 0 8rem; }
-button.goals { width: 100%; min-height: 0; padding: .25rem 0; margin-bottom: .5rem; border: 0; background: none; display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; text-align: left; font-size: .85rem; color: var(--muted); }
+button.goals { width: 100%; min-height: 0; padding: .25rem 0 .5rem; margin: .25rem 0 .25rem; border: 0; background: none; display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; text-align: left; font-size: .85rem; color: var(--muted); }
 button.goals > span { display: grid; gap: .2rem; }
 button.goals progress { width: 100%; }
 .banner, #error, #dataError { padding: .75rem 1rem; border-radius: .75rem; margin: .75rem 0; }
