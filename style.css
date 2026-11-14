@@ -1,0 +1,73 @@
+:root {
+  color-scheme: light dark;
+  --bg: light-dark(#f6f7f5, #121413);
+  --card: light-dark(#fff, #1d201e);
+  --fg: light-dark(#1b1f1d, #e8ece9);
+  --muted: light-dark(#5a645e, #a3ada7);
+  --line: light-dark(#d6dbd8, #353b37);
+  --accent: light-dark(#2f6f4f, #6fcf9b);
+  --on-accent: light-dark(#fff, #0b1a12);
+  --danger: light-dark(#b3261e, #ff8a80);
+  accent-color: var(--accent);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 1rem/1.4 system-ui, sans-serif;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+main { max-width: 32rem; margin: 0 auto; padding: 1rem 1rem 6rem; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+h1 { font-size: 1.15rem; margin: 0; }
+h2 { font-size: 1.05rem; margin: 1.5rem 0 .5rem; }
+dialog h2 { margin-top: 0; }
+button, .btn {
+  min-height: 48px; min-width: 48px; padding: 0 1rem; font: inherit;
+  border: 1px solid var(--line); border-radius: .75rem; background: var(--card); color: var(--fg);
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+button.primary, .quick button, .banner button, dialog button[value=ok] { background: var(--accent); color: var(--on-accent); border-color: transparent; font-weight: 600; }
+.danger { color: var(--danger); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 1rem; padding: .75rem 1rem 1rem; margin: .75rem 0; }
+.card h3 { margin: 0; font-size: 1.1rem; }
+.card p { margin: 0 0 .5rem; color: var(--muted); font-size: .9rem; }
+.quick { display: flex; gap: .5rem; }
+.quick button { flex: 1; font-size: 1.4rem; min-height: 56px; }
+.quick button.more { flex: 0 0 56px; background: var(--card); color: var(--fg); border-color: var(--line); }
+#cards > .primary { width: 100%; }
+#today { list-style: none; margin: 0; padding: 0; }
+#today button { width: 100%; justify-content: flex-start; text-align: left; margin-bottom: .35rem; }
+.banner, #error, #dataError { padding: .75rem 1rem; border-radius: .75rem; margin: .75rem 0; }
+.banner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid var(--accent); }
+#error, #dataError { border: 1px solid var(--danger); color: var(--danger); }
+[hidden] { display: none !important; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.hint { color: var(--muted); font-size: .85rem; }
+
+dialog { width: min(28rem, calc(100% - 2rem)); max-height: calc(100% - 2rem); border: 1px solid var(--line); border-radius: 1rem; background: var(--card); color: var(--fg); padding: 1rem; }
+dialog:modal { overscroll-behavior: contain; }
+dialog::backdrop { background: rgb(0 0 0 / .5); overscroll-behavior: contain; }
+dialog label { display: block; margin-bottom: .75rem; }
+dialog label.btn { display: inline-flex; margin: 0; }
+dialog input:not([type=file]) { display: block; width: 100%; min-height: 48px; margin-top: .25rem; padding: 0 .75rem; font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--line); border-radius: .5rem; }
+.actions { display: flex; flex-wrap: wrap; gap: .5rem; justify-content: flex-end; }
+#exList { list-style: none; padding: 0; margin: 0 0 1rem; }
+#exList li { border-bottom: 1px solid var(--line); padding: .5rem 0; display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+#exList strong { flex: 1 1 100%; }
+#exList input { flex: 1 1 100%; font-size: .75rem; min-height: 36px !important; }
+
+#toast {
+  position: fixed; inset: auto 0 calc(1rem + env(safe-area-inset-bottom)) 0; margin: 0 auto;
+  width: min(30rem, calc(100% - 2rem)); padding: .5rem .5rem .5rem 1rem;
+  border: 0; border-radius: .75rem; background: var(--fg); color: var(--bg);
+  align-items: center; justify-content: space-between; gap: 1rem;
+  opacity: 0; translate: 0 1rem;
+  transition: opacity .25s, translate .25s, display .25s, overlay .25s;
+  transition-behavior: allow-discrete;
+}
+
+#toast:popover-open { display: flex; opacity: 1; translate: 0 0; }
+#toast:not([popover]):not([hidden]) { display: flex; opacity: 1; translate: 0 0; }
+@starting-style { #toast:popover-open { opacity: 0; translate: 0 1rem; } }
+#toast button { background: transparent; color: inherit; border-color: currentcolor; }
+@media (prefers-reduced-motion: reduce) { #toast { transition: none; } }
