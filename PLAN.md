@@ -37,7 +37,7 @@ Quelle: Claude Doc „Nebenbei stark – Projektplan v2“. Begonnen als Prototy
 - `validateSet({reps, weightKg})` → Fehlertext oder `null` (reps ganzzahlig ≥ 1, weight leer/null oder Zahl ≥ 0)
 - `upsertSet(state, set)` → neuer State; gleiche id überschreibt (Idempotenz)
 - `removeSet(state, id)`
-- `quickValues(state, exerciseId)` → 2 Zahlen: die zwei zuletzt genutzten **verschiedenen** Wiederholungszahlen, aufgefüllt mit `startQuick`
+- `quickValues(state, exerciseId)` → 2 Zahlen: die zwei zuletzt genutzten **verschiedenen** Wiederholungszahlen, aufgefüllt mit `startQuick`, aufsteigend sortiert (Knöpfe wechseln beim Tippen nicht den Platz)
 - `sortedExercises(state)` → nicht archiviert, nach letzter Nutzung absteigend, nie genutzte danach in Anlage-Reihenfolge
 - `daySummary(state, day)` → `[{exerciseId, name, sets, reps}]`
 - `setsOfDay(state, day)` → neueste zuerst

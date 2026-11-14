@@ -47,7 +47,8 @@ export function quickValues(state, exerciseId) {
   const start = ex?.startQuick ?? [5, 8];
   for (const v of start) if (list.length < 2 && !list.includes(v)) list.push(v);
   while (list.length < 2) list.push(list[0] + 1); // nie zwei gleiche Buttons
-  return list;
+  // Aufsteigend, damit ein Knopf beim Tippen nicht unter dem Daumen den Platz wechselt.
+  return list.sort((a, b) => a - b);
 }
 
 export function sortedExercises(state) {

@@ -37,14 +37,17 @@ test('upsertSet ist idempotent, removeSet entfernt', () => {
   assert.equal(L.removeSet(s2, '1').sets.length, 0);
 });
 
-test('quickValues: verschiedene Werte, zuletzt zuerst, Auffüllen', () => {
+test('quickValues: zwei zuletzt genutzte verschiedene Werte, aufsteigend, Auffüllen', () => {
   let s = { ...empty(), exercises: [ex('e', 'A')] };
   assert.deepEqual(L.quickValues(s, 'e'), [5, 8]);
   s = L.upsertSet(s, set('1', 'e', '2026-11-14T10:00:00+01:00', 12));
-  assert.deepEqual(L.quickValues(s, 'e'), [12, 5]);
+  assert.deepEqual(L.quickValues(s, 'e'), [5, 12]);
   s = L.upsertSet(s, set('2', 'e', '2026-11-14T11:00:00+01:00', 12));
   s = L.upsertSet(s, set('3', 'e', '2026-11-14T09:00:00+01:00', 7));
-  assert.deepEqual(L.quickValues(s, 'e'), [12, 7]);
+  assert.deepEqual(L.quickValues(s, 'e'), [7, 12]);
+  // Einen vorhandenen Knopf antippen ändert nichts an den Knöpfen.
+  s = L.upsertSet(s, set('4', 'e', '2026-11-14T12:00:00+01:00', 7));
+  assert.deepEqual(L.quickValues(s, 'e'), [7, 12]);
 });
 
 test('sortedExercises: letzte Nutzung, ungenutzte danach, ohne archivierte', () => {
