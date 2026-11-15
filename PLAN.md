@@ -38,7 +38,7 @@ Quelle: Claude Doc „Nebenbei stark – Projektplan v2“. Begonnen als Prototy
 - `upsertSet(state, set)` → neuer State; gleiche id überschreibt (Idempotenz)
 - `removeSet(state, id)`
 - `quickValues(state, exerciseId)` → 2 Zahlen: die zwei zuletzt genutzten **verschiedenen** Wiederholungszahlen, aufgefüllt mit `startQuick`, aufsteigend sortiert (Knöpfe wechseln beim Tippen nicht den Platz)
-- `sortedExercises(state)` → nicht archiviert, nach letzter Nutzung absteigend, nie genutzte danach in Anlage-Reihenfolge
+- `sortedExercises(state)` → nicht archiviert, nach Anzahl Sätze der 4 Wochen vor `before` absteigend, dann letzter Nutzung, nie genutzte danach in Anlage-Reihenfolge
 - `daySummary(state, day)` → `[{exerciseId, name, sets, reps}]`
 - `setsOfDay(state, day)` → neueste zuerst
 - `findOrCreateExercise(state, u)` → Abgleich `u` gegen id, oder `slug(name) === slug(u)` (klein, Umlaute ä→ae usw., Nicht-Alphanumerisch → `-`); nicht gefunden → neue Übung mit Name aus `u` (Bindestriche → Leerzeichen, erster Buchstabe groß, ae/oe/ue → ä/ö/ü außer nach a/e/q), startQuick `[n, n]`. Archivierte Übung bei Treffer wieder aktivieren.
@@ -60,7 +60,7 @@ Banner „Neue Version verfügbar“: beim Start und bei `visibilitychange` wird
 Banner (nur wenn `exportNeeded`): „Letzter Export > 14 Tage – jetzt sichern“ mit Button.
 Fehlerbanner (role=alert), wenn Speichern fehlschlägt (try/catch um `localStorage.setItem`).
 
-**Übungskarten** (Reiter Heute, Reihenfolge `sortedExercises(state, heute)`: letzte Nutzung vor heute, bleibt also den Tag über fest): kompakt: Name und rechts daneben „Heute 11/9 ✓ · Woche 35/40 🔥3“, darunter zwei dünne `<progress>` (ohne Ziel nur „Heute 11 · Woche 30“; Antippen öffnet „Übung bearbeiten“ mit Tages-/Wochenziel), zwei große Buttons „+5“ „+8“ (aus `quickValues`), Button „…“ → Dialog freie Eingabe (Wiederholungen, Gewicht optional).
+**Übungskarten** (Reiter Heute, Reihenfolge `sortedExercises(state, heute)`: Häufigkeit der 4 Wochen vor heute, bleibt also den Tag über fest): kompakt: Name und rechts daneben „Heute 11/9 ✓ · Woche 35/40 🔥3“, darunter zwei dünne `<progress>` (ohne Ziel nur „Heute 11 · Woche 30“; Antippen öffnet „Übung bearbeiten“ mit Tages-/Wochenziel), zwei große Buttons „+5“ „+8“ (aus `quickValues`), Button „…“ → Dialog freie Eingabe (Wiederholungen, Gewicht optional).
 Leerer Zustand: Hinweis + Button „Erste Übung anlegen“.
 Button „+ Übung“ am Ende der Liste.
 

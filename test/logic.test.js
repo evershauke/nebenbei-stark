@@ -61,6 +61,10 @@ test('sortedExercises: letzte Nutzung, ungenutzte danach, ohne archivierte', () 
   const s2 = { ...s, sets: [...s.sets, set('3', 'b', '2026-11-15T09:00:00+01:00')] };
   assert.deepEqual(L.sortedExercises(s2, '2026-11-15').map((e) => e.id), ['c', 'b', 'a']);
   assert.deepEqual(L.sortedExercises(s2).map((e) => e.id), ['b', 'c', 'a']);
+  // Häufigkeit vor letzter Nutzung; Sätze älter als 4 Wochen zählen nicht.
+  const s3 = { ...s, sets: [...s.sets, set('4', 'b', '2026-11-13T10:00:00+01:00'),
+    set('5', 'a', '2026-10-01T10:00:00+02:00'), set('6', 'a', '2026-10-02T10:00:00+02:00'), set('7', 'a', '2026-10-03T10:00:00+02:00')] };
+  assert.deepEqual(L.sortedExercises(s3, '2026-11-15').map((e) => e.id), ['b', 'c', 'a']);
 });
 
 test('findOrCreateExercise: Slug mit Umlauten, Neuanlage, Reaktivierung', () => {

@@ -51,13 +51,19 @@ export function quickValues(state, exerciseId) {
   return list.sort((a, b) => a - b);
 }
 
+// Häufigste zuerst (Anzahl Sätze der 4 Wochen vor `before`), bei Gleichstand zuletzt genutzte, nie genutzte danach.
 // Mit `before` zählen nur Sätze vor diesem Tag: so bleibt die Reihenfolge den Tag über fest und springt nicht beim Tippen.
 export function sortedExercises(state, before = null) {
-  const last = new Map();
-  for (const s of state.sets) if (!before || localDay(s.at) < before) last.set(s.exerciseId, Math.max(last.get(s.exerciseId) ?? 0, t(s.at)));
-  return state.exercises.map((e, i) => ({ e, i, u: last.get(e.id) }))
+  const last = new Map(), count = new Map(), from = before && addDays(before, -28);
+  for (const s of state.sets) {
+    const d = localDay(s.at);
+    if (before && (d >= before || d < from)) continue;
+    last.set(s.exerciseId, Math.max(last.get(s.exerciseId) ?? 0, t(s.at)));
+    count.set(s.exerciseId, (count.get(s.exerciseId) ?? 0) + 1);
+  }
+  return state.exercises.map((e, i) => ({ e, i, n: count.get(e.id) ?? 0, u: last.get(e.id) ?? 0 }))
     .filter((x) => !x.e.archived)
-    .sort((a, b) => (a.u === undefined) - (b.u === undefined) || (b.u ?? 0) - (a.u ?? 0) || a.i - b.i)
+    .sort((a, b) => b.n - a.n || b.u - a.u || a.i - b.i)
     .map((x) => x.e);
 }
 

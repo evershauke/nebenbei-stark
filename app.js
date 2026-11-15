@@ -205,8 +205,8 @@ function render() {
     const meter = (aria, x) => (x.goal ? h('progress', { max: x.goal, value: Math.min(x.reps, x.goal), ariaLabel: `${aria} ${ex.name}` }) : h('span'));
     return h('div', { className: 'card', 'data-ex': ex.id },
       h('div', { className: 'top' },
-        h('h3', {}, ex.name),
-        h('button', { type: 'button', className: 'goals', title: 'Ziele ändern', onclick: () => exDialog(ex) },
+        h('h3', {}, h('button', { type: 'button', className: 'name', title: 'Umbenennen', onclick: () => exDialog(ex) }, ex.name)),
+        h('button', { type: 'button', className: 'goals', title: 'Name und Ziele ändern', onclick: () => exDialog(ex) },
           `${txt('Heute', g.day)} · ${txt('Woche', g.week)}${n ? ` 🔥${n}` : ''}`)),
       g.day.goal || g.week.goal ? h('div', { className: 'meters' }, meter('Tagesziel', g.day), meter('Wochenziel', g.week)) : '',
       h('div', { className: 'quick' },

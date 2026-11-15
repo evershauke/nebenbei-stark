@@ -57,6 +57,7 @@ button.primary, .quick button, .banner button, dialog button[value=ok] { backgro
 .row select { flex: 1; min-height: 48px; padding: 0 .75rem; font: inherit; color: inherit; background: var(--card); border: 1px solid var(--line); border-radius: .75rem; }
 .row select:last-child { flex: 0 0 8rem; }
 button.goals { min-height: 44px; padding: 0; border: 0; background: none; font-size: .85rem; color: var(--muted); text-align: right; justify-content: flex-end; }
+button.name { min-height: 44px; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; justify-content: flex-start; }
 .banner, #error, #dataError { padding: .75rem 1rem; border-radius: .75rem; margin: .75rem 0; }
 .banner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid var(--accent); }
 #error, #dataError { border: 1px solid var(--danger); color: var(--danger); }
