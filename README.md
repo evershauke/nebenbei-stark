@@ -8,7 +8,7 @@ Strichlisten-Logger fürs Handy: Satz machen, einmal tippen, fertig. Fünf Klimm
 Link in Chrome öffnen → Menü „⋮“ → „Zum Startbildschirm hinzufügen“ bzw. „App installieren“. Danach startet sie wie eine normale App, auch offline.
 
 ## Funktionen
-- **Heute**: kompakte Karte je Übung mit zwei Schnellknöpfen (die zwei zuletzt genutzten Wiederholungszahlen, aufsteigend, damit nichts unter dem Daumen springt) und „…“ für freie Eingabe mit optionalem Gewicht. Jeder Eintrag lässt sich 5 s lang rückgängig machen. Die Reihenfolge der Karten richtet sich nach der Häufigkeit der letzten 4 Wochen (bei Gleichstand nach der letzten Nutzung), gezählt bis gestern, und bleibt den Tag über fest. Antippen des Namens öffnet „Übung bearbeiten“ zum Umbenennen.
+- **Heute**: kompakte Karte je Übung mit zwei Schnellknöpfen (die zwei zuletzt genutzten Wiederholungszahlen, aufsteigend, damit nichts unter dem Daumen springt) und „…“ für freie Eingabe mit optionalem Gewicht. Jeder Eintrag lässt sich 5 s lang rückgängig machen. Die Reihenfolge der Karten richtet sich nach der Häufigkeit der letzten 4 Wochen (bei Gleichstand nach der letzten Nutzung), gezählt bis gestern, und bleibt den Tag über fest. Antippen des Namens öffnet „Übung bearbeiten“ zum Umbenennen; darunter steht, wann die Übung zuletzt dran war („zuletzt vor 2 Std.“, „zuletzt gestern“).
 - **Ideen**: Beim Anlegen einer Übung gibt es Vorschläge nach Gruppe (Ziehen, Drücken, Beine, Hüfte, Rumpf); Halte-Übungen wie Plank zählen Sekunden.
 - **Ziele**: Tages- und Wochenziel je Übung, automatisch Schnitt der letzten Zeit + 5 %, steigt also langsam mit. Antippen der Zielzeile öffnet „Übung bearbeiten“ zum Überschreiben.
 - **Serie**: 🔥 N = Wochen in Folge mit erreichtem Wochenziel.

@@ -37,6 +37,13 @@ const nameOf = (id) => state.exercises.find((e) => e.id === id)?.name ?? '?';
 const today = () => localDay(isoLocal(new Date()));
 let openDay = null; // in „Letzte 7 Tage“ aufgeklappter Tag, bleibt beim Neuzeichnen offen
 const dayLabel = (d) => new Date(`${d}T12:00`).toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'numeric' });
+// „vor 5 Min.“, „vor 2 Std.“ am selben Tag, sonst nach Kalendertagen („gestern“, „vor 3 Tagen“).
+const rtf = new Intl.RelativeTimeFormat('de-DE', { numeric: 'auto', style: 'short' });
+function ago(at) {
+  const min = Math.floor((Date.now() - Date.parse(at)) / 6e4), d = localDay(at), t = today();
+  if (d === t) return min < 1 ? 'gerade eben' : min < 60 ? rtf.format(-min, 'minute') : rtf.format(-Math.floor(min / 60), 'hour');
+  return rtf.format(-Math.round((Date.parse(`${t}T12:00`) - Date.parse(`${d}T12:00`)) / 864e5), 'day');
+}
 const kg = (w) => (w || w === 0 ? ` · ${w} kg` : '');
 
 // ---- Toast ----
@@ -201,11 +208,13 @@ function render() {
     const g = goals(state, ex, day);
     // Ohne Ziel (noch keine Daten) nur die Zahl, sonst „11/9 ✓“ mit Balken.
     const n = streak(state, ex, day);
+    const last = state.sets.reduce((a, s) => (s.exerciseId === ex.id && (!a || Date.parse(s.at) > Date.parse(a)) ? s.at : a), null);
     const txt = (label, x) => `${label} ${x.reps}${x.goal ? `/${x.goal}${x.reps >= x.goal ? ' ✓' : ''}` : ''}`;
     const meter = (aria, x) => (x.goal ? h('progress', { max: x.goal, value: Math.min(x.reps, x.goal), ariaLabel: `${aria} ${ex.name}` }) : h('span'));
     return h('div', { className: 'card', 'data-ex': ex.id },
       h('div', { className: 'top' },
-        h('h3', {}, h('button', { type: 'button', className: 'name', title: 'Umbenennen', onclick: () => exDialog(ex) }, ex.name)),
+        h('h3', {}, h('button', { type: 'button', className: 'name', title: 'Umbenennen', onclick: () => exDialog(ex) }, ex.name),
+          last ? h('span', { className: 'ago' }, `zuletzt ${ago(last)}`) : ''),
         h('button', { type: 'button', className: 'goals', title: 'Name und Ziele ändern', onclick: () => exDialog(ex) },
           `${txt('Heute', g.day)} · ${txt('Woche', g.week)}${n ? ` 🔥${n}` : ''}`)),
       g.day.goal || g.week.goal ? h('div', { className: 'meters' }, meter('Tagesziel', g.day), meter('Wochenziel', g.week)) : '',
