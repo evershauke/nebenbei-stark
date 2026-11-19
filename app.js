@@ -155,7 +155,7 @@ function add(exerciseId, reps, weightKg = null, from = null) {
   const undo = () => commit(removeSet(state, set.id));
   if (reached('week') || reached('day')) {
     navigator.vibrate?.([30, 60, 30, 60, 120]);
-    confetti(rect ?? card?.getBoundingClientRect());
+    confetti(rect ?? card?.getBoundingClientRect(), card, reached('week'));
     const n = streak(state, ex, today());
     return toast(reached('week') ? `Wochenziel geschafft! 🔥 ${n} ${n === 1 ? 'Woche' : 'Wochen'} in Folge` : `${ex.name}: Tagesziel geschafft! 🎉`, undo);
   }
@@ -168,23 +168,33 @@ function add(exerciseId, reps, weightKg = null, from = null) {
 // ---- Belohnung: schwebende Zahl, Konfetti (nur ohne „Bewegung reduzieren“) ----
 const calm = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const fx = (cls, text, x, y) => document.body.appendChild(h('span', { className: cls, ariaHidden: 'true', style: `left:${x}px;top:${y}px` }, text));
-function burst(text, r) {
+function burst(text, r, k = 1) {
   if (calm()) return;
   const el = fx('float', text, r.left + r.width / 2, r.top);
-  el.animate([{ translate: '-50% 0', scale: 0.8 }, { translate: '-50% -3rem', scale: 1.5, opacity: 1, offset: 0.6 }, { translate: '-50% -4.5rem', scale: 1.6, opacity: 0 }], { duration: 750, easing: 'cubic-bezier(.2,.8,.3,1)' })
+  el.animate([{ translate: '-50% 0', scale: 0.8 * k }, { translate: `-50% ${-3 * k}rem`, scale: 1.5 * k, opacity: 1, offset: 0.6 }, { translate: `-50% ${-4.5 * k}rem`, scale: 1.6 * k, opacity: 0 }], { duration: 750 * Math.sqrt(k), easing: 'cubic-bezier(.2,.8,.3,1)' })
     .finished.then(() => el.remove());
 }
-function confetti(r) {
+function confetti(r, card, big) {
   if (calm() || !r) return;
-  const colors = ['var(--accent)', '#f5c542', '#ff8a65', '#64b5f6', '#ba68c8'];
-  for (let i = 0; i < 40; i++) {
-    const el = fx('confetti', '', r.left + r.width / 2, r.top + r.height / 2), a = Math.random() * 2 * Math.PI, d = 60 + Math.random() * 120;
+  const colors = ['var(--accent)', '#f5c542', '#ff8a65', '#64b5f6', '#ba68c8', '#ef5350', '#4dd0e1'];
+  const piece = (x, y, a, d, up, fall, i) => {
+    const el = fx('confetti', '', x, y);
     el.style.background = colors[i % colors.length];
+    el.style.scale = 0.6 + Math.random();
     el.animate([{ translate: '0 0', rotate: '0turn', opacity: 1 },
-      { translate: `${Math.cos(a) * d}px ${Math.sin(a) * d - 40}px`, rotate: `${Math.random() * 2}turn`, opacity: 1, offset: 0.5 },
-      { translate: `${Math.cos(a) * d * 1.3}px ${Math.sin(a) * d + 160}px`, rotate: `${Math.random() * 4}turn`, opacity: 0 }],
-    { duration: 1200 + Math.random() * 600, easing: 'ease-out' }).finished.then(() => el.remove());
-  }
+      { translate: `${Math.cos(a) * d}px ${Math.sin(a) * d - up}px`, rotate: `${Math.random() * 3}turn`, opacity: 1, offset: 0.4 },
+      { translate: `${Math.cos(a) * d * 1.4}px ${Math.sin(a) * d + fall}px`, rotate: `${Math.random() * 6}turn`, opacity: 0 }],
+    { duration: 1600 + Math.random() * 1400, easing: 'ease-out' }).finished.then(() => el.remove());
+  };
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2, n = big ? 220 : 130;
+  for (let i = 0; i < n; i++) piece(cx, cy, Math.random() * 2 * Math.PI, 80 + Math.random() * 280, 120, 320, i);
+  // Zweite Welle: Konfettiregen über die ganze Breite.
+  setTimeout(() => { for (let i = 0; i < n / 2; i++) piece(Math.random() * innerWidth, -20, Math.PI / 2, 20 + Math.random() * 60, 0, innerHeight, i); }, 250);
+  const flash = fx('flash', '', 0, 0);
+  flash.style.background = `radial-gradient(circle at ${cx}px ${cy}px, color-mix(in srgb, var(--accent) 55%, transparent), transparent 70%)`;
+  flash.animate([{ opacity: 0 }, { opacity: 1, offset: 0.15 }, { opacity: 0 }], { duration: 700, easing: 'ease-out' }).finished.then(() => flash.remove());
+  burst(big ? '🔥🏆🔥' : '🎉', r, 3);
+  card?.animate([{ scale: 1, rotate: '0deg' }, { scale: 1.12, rotate: '-3deg', offset: 0.25 }, { scale: 1.08, rotate: '3deg', offset: 0.5 }, { scale: 1.04, rotate: '-1.5deg', offset: 0.75 }, { scale: 1, rotate: '0deg' }], { duration: 600, easing: 'ease-out' });
 }
 
 function editSet(set) {
