@@ -58,6 +58,7 @@ button.primary, .quick button, .banner button, dialog button[value=ok] { backgro
 .row select:last-child { flex: 0 0 8rem; }
 button.goals { min-height: 44px; padding: 0; border: 0; background: none; font-size: .85rem; color: var(--muted); text-align: right; justify-content: flex-end; }
 button.name { min-height: 44px; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; justify-content: flex-start; }
+button.name::after { content: "✎" / ""; margin-left: .3em; opacity: .5; font-size: .85em; }
 .ago { display: block; margin-top: -.5rem; font-size: .8rem; font-weight: 400; color: var(--muted); }
 .banner, #error, #dataError { padding: .75rem 1rem; border-radius: .75rem; margin: .75rem 0; }
 .banner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid var(--accent); }
